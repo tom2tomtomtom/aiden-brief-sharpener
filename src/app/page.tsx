@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import FAQAccordion from '@/components/FAQAccordion'
 
 const demoInput = {
   productName: 'FlowDesk',
@@ -67,28 +68,15 @@ const testimonials = [
   },
 ]
 
-const faqs = [
-  {
-    question: 'Is it really free to start?',
-    answer: 'Yes. The free plan gives you 3 generations per month with no credit card required. Upgrade only when you need more.',
-  },
-  {
-    question: 'What AI model powers AIDEN?',
-    answer: 'AIDEN uses Claude by Anthropic — one of the most capable language models for nuanced, high-quality writing.',
-  },
-  {
-    question: 'Can I use the output commercially?',
-    answer: 'Absolutely. All generated copy is yours to use however you like — on your website, in ads, in pitch decks, anywhere.',
-  },
-  {
-    question: 'Do I need to know how to code?',
-    answer: 'No. The downloaded HTML file works out of the box. You can host it on Netlify, GitHub Pages, or any static host in minutes.',
-  },
-  {
-    question: 'What templates are available?',
-    answer: 'AIDEN includes five templates: SaaS, Agency, Freelancer, E-commerce, and Local Business. Each has distinct copy style and visual theme.',
-  },
+const comparisonRows = [
+  { feature: 'Price', aiden: '$19 one-time', chatgpt: '$20/mo', copyai: '$49/mo', freelancer: '$500–2,000' },
+  { feature: 'Live Preview', aiden: true, chatgpt: false, copyai: false, freelancer: false },
+  { feature: 'HTML Export', aiden: true, chatgpt: false, copyai: false, freelancer: true },
+  { feature: 'Landing Page Specific', aiden: true, chatgpt: false, copyai: false, freelancer: true },
+  { feature: 'Time to Page', aiden: '30 seconds', chatgpt: '5–10 min', copyai: '3–5 min', freelancer: '3–7 days' },
+  { feature: 'No Subscription', aiden: true, chatgpt: false, copyai: false, freelancer: true },
 ]
+
 
 export default function MarketingPage() {
   return (
@@ -333,6 +321,50 @@ export default function MarketingPage() {
         </div>
       </section>
 
+      {/* Comparison table */}
+      <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              How AIDEN compares
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              The fastest, most affordable way to get a conversion-ready landing page.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-500">Feature</th>
+                  <th className="text-center py-3 px-4 font-bold text-indigo-600">AIDEN</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-500">ChatGPT</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-500">Copy.ai</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-500">Freelancer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonRows.map((row) => (
+                  <tr key={row.feature} className="border-b border-gray-100">
+                    <td className="py-3 px-4 font-medium text-gray-900">{row.feature}</td>
+                    {(['aiden', 'chatgpt', 'copyai', 'freelancer'] as const).map((col) => {
+                      const val = row[col]
+                      return (
+                        <td key={col} className={`text-center py-3 px-4 ${col === 'aiden' ? 'bg-indigo-50/50 font-semibold text-gray-900' : 'text-gray-600'}`}>
+                          {typeof val === 'boolean' ? (
+                            val ? <span className="text-green-600 text-lg">&#10003;</span> : <span className="text-red-400 text-lg">&#10007;</span>
+                          ) : val}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing teaser */}
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
@@ -388,21 +420,7 @@ export default function MarketingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 text-center mb-12">
-            Frequently asked questions
-          </h2>
-          <div className="space-y-4">
-            {faqs.map((item) => (
-              <div key={item.question} className="rounded-xl border border-gray-200 bg-white px-6 py-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">{item.question}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{item.answer}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FAQAccordion />
 
       {/* Final CTA */}
       <section className="px-4 py-24 sm:px-6 lg:px-8">
