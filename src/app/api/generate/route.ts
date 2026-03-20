@@ -1,5 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { canGenerate, incrementUsage, getUserPlan } from '@/lib/usage'
 
 const client = new Anthropic()
 
@@ -31,6 +34,31 @@ interface GenerateResponse {
 }
 
 export async function POST(request: NextRequest) {
+  // Auth check
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Usage limit check
+  const adminSupabase = createAdminClient()
+  const { allowed, planLimits } = await canGenerate(adminSupabase, user.id)
+
+  if (!allowed) {
+    return NextResponse.json(
+      {
+        error: 'Generation limit reached',
+        plan: planLimits.plan,
+        used: planLimits.used,
+        limit: planLimits.limit,
+        upgradeUrl: '/pricing',
+      },
+      { status: 429 }
+    )
+  }
+
   let body: GenerateRequest
 
   try {
@@ -97,6 +125,10 @@ Generate 3-5 features and 3-4 FAQ items. Match the ${tone} tone throughout.`
       }
       parsed = JSON.parse(match[0]) as GenerateResponse
     }
+
+    // Track usage after successful generation
+    const plan = await getUserPlan(adminSupabase, user.id)
+    await incrementUsage(adminSupabase, user.id, plan)
 
     return NextResponse.json(parsed)
   } catch (error) {
