@@ -46,16 +46,24 @@ function ScoreCircle({ score }: { score: number }) {
 }
 
 const BRIEF_FIELD_LABELS: Record<string, string> = {
+  campaign_name: 'Campaign',
+  objectives: 'Objectives',
   objective: 'Objective',
   target_audience: 'Target Audience',
   brand: 'Brand',
+  brand_name: 'Brand',
   deliverables: 'Deliverables',
+  requirements: 'Requirements',
+  platforms: 'Platforms',
   tone: 'Tone of Voice',
+  tone_of_voice: 'Tone of Voice',
   budget: 'Budget',
   timeline: 'Timeline',
   kpis: 'Success Metrics / KPIs',
+  confidence: 'Confidence',
   key_message: 'Key Message',
   constraints: 'Constraints',
+  aiden_analysis: 'AIDEN Analysis',
 }
 
 function ExtractedBriefCard({ extractedBrief }: { extractedBrief: Record<string, unknown> }) {

@@ -28,24 +28,33 @@ async function callBrainAPI<T>(path: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>
 }
 
+// Brain V2 returns different field names than expected. Map to canonical names.
+function hasValue(obj: Record<string, unknown>, ...fields: string[]): boolean {
+  for (const field of fields) {
+    const value = obj[field]
+    if (value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)) {
+      return true
+    }
+  }
+  return false
+}
+
+// Fields to check, with Brain V2 field name aliases
+const BRIEF_CHECKS = [
+  { aliases: ['objectives', 'objective'], label: 'Clear campaign objective or goal' },
+  { aliases: ['target_audience', 'audience'], label: 'Target audience definition' },
+  { aliases: ['campaign_name', 'brand', 'brand_name'], label: 'Brand context or guidelines' },
+  { aliases: ['deliverables', 'requirements', 'platforms'], label: 'Specific deliverables' },
+  { aliases: ['tone', 'tone_of_voice'], label: 'Tone of voice or messaging direction' },
+  { aliases: ['budget'], label: 'Budget or scope constraints' },
+  { aliases: ['timeline', 'timing'], label: 'Timeline or deadlines' },
+  { aliases: ['kpis', 'success_metrics', 'confidence'], label: 'Success metrics or KPIs' },
+] as const
+
 function calculateBriefScore(briefText: string, extractedBrief: Record<string, unknown>): number {
-  const importantFields = [
-    'objective',
-    'target_audience',
-    'brand',
-    'deliverables',
-    'tone',
-    'budget',
-    'timeline',
-    'kpis',
-  ]
+  const presentCount = BRIEF_CHECKS.filter(({ aliases }) => hasValue(extractedBrief, ...aliases)).length
 
-  const presentCount = importantFields.filter((field) => {
-    const value = extractedBrief[field]
-    return value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)
-  }).length
-
-  const fieldScore = (presentCount / importantFields.length) * 70
+  const fieldScore = (presentCount / BRIEF_CHECKS.length) * 70
   const lengthScore = Math.min((briefText.length / 500) * 20, 20)
   const structureScore = briefText.includes('\n') ? 10 : 0
 
@@ -53,22 +62,8 @@ function calculateBriefScore(briefText: string, extractedBrief: Record<string, u
 }
 
 function identifyGaps(extractedBrief: Record<string, unknown>): string[] {
-  const checks: Array<{ field: string; label: string }> = [
-    { field: 'objective', label: 'Clear campaign objective or goal' },
-    { field: 'target_audience', label: 'Target audience definition' },
-    { field: 'brand', label: 'Brand context or guidelines' },
-    { field: 'deliverables', label: 'Specific deliverables' },
-    { field: 'tone', label: 'Tone of voice or messaging direction' },
-    { field: 'budget', label: 'Budget or scope constraints' },
-    { field: 'timeline', label: 'Timeline or deadlines' },
-    { field: 'kpis', label: 'Success metrics or KPIs' },
-  ]
-
-  return checks
-    .filter(({ field }) => {
-      const value = extractedBrief[field]
-      return value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)
-    })
+  return BRIEF_CHECKS
+    .filter(({ aliases }) => !hasValue(extractedBrief, ...aliases))
     .map(({ label }) => label)
 }
 
