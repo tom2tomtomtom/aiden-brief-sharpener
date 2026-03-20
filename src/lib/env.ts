@@ -9,7 +9,7 @@ const requiredVars = [
   'STRIPE_PRICE_ID_PRO',
 ] as const
 
-const optionalVars = ['NEXT_PUBLIC_URL'] as const
+const optionalVars = ['NEXT_PUBLIC_URL', 'AIDEN_BRAIN_API_URL', 'AIDEN_BRAIN_API_KEY'] as const
 
 type RequiredVars = (typeof requiredVars)[number]
 type OptionalVars = (typeof optionalVars)[number]
