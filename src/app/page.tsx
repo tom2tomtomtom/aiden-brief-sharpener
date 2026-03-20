@@ -159,7 +159,7 @@ export default async function MarketingPage() {
             {[
               { label: 'Powered by AIDEN Brain V2' },
               { label: '340+ Creative Phantoms' },
-              { label: 'Used by agencies and brands' },
+              { label: 'Built for agencies and brands' },
               { label: 'Built with Claude AI' },
             ].map(({ label }) => (
               <span
