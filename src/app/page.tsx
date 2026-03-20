@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import FAQAccordion from '@/components/FAQAccordion'
 import TryDemoSection from '@/components/TryDemoSection'
+import EmailCapture from '@/components/EmailCapture'
 import type { StatsResponse } from '@/app/api/stats/route'
 
 async function getStats(): Promise<StatsResponse> {
@@ -436,6 +437,9 @@ export default async function MarketingPage() {
           <p className="mt-4 text-sm text-gray-400">No credit card required · 3 free analyses per month</p>
         </div>
       </section>
+
+      {/* Email capture */}
+      <EmailCapture />
 
       {/* Footer */}
       <footer className="border-t border-gray-100 py-8 px-4 sm:px-6 lg:px-8">
