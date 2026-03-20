@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GenerateFormData } from '@/app/page'
+import { GenerateFormData } from '@/app/generate/page'
 import { TEMPLATES, TemplateId, DEFAULT_TEMPLATE_ID, getTemplate } from '@/lib/templates'
 
 const TONES = [

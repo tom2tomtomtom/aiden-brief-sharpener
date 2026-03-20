@@ -17,7 +17,7 @@ const tiers = [
     ],
     cta: 'Start Free',
     ctaType: 'link' as const,
-    href: '/',
+    href: '/generate',
     plan: null,
     highlighted: false,
   },
@@ -93,7 +93,7 @@ export default function PricingPage() {
       {/* Header */}
       <div className="text-center mb-14">
         <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium mb-6 inline-block">
-          ← Back to generator
+          ← Back to home
         </Link>
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Simple, honest pricing</h1>
         <p className="text-lg text-gray-600 max-w-xl mx-auto">
