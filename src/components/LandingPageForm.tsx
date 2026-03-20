@@ -31,6 +31,7 @@ interface LandingPageFormProps {
   onGenerate: (data: GenerateFormData) => void
   isLoading: boolean
   error: string | null
+  onFormChange?: (filled: boolean) => void
 }
 
 const initialFormData: FormFields = {
@@ -42,7 +43,7 @@ const initialFormData: FormFields = {
   template: DEFAULT_TEMPLATE_ID,
 }
 
-export default function LandingPageForm({ onGenerate, isLoading, error }: LandingPageFormProps) {
+export default function LandingPageForm({ onGenerate, isLoading, error, onFormChange }: LandingPageFormProps) {
   const [formData, setFormData] = useState<FormFields>(initialFormData)
   const [errors, setErrors] = useState<FormErrors>({})
 
@@ -92,7 +93,7 @@ export default function LandingPageForm({ onGenerate, isLoading, error }: Landin
   const selectedTemplate = getTemplate(formData.template)
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
+    <form id="generate-form" onSubmit={handleSubmit} noValidate className="space-y-6">
       {/* API error banner */}
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -129,7 +130,11 @@ export default function LandingPageForm({ onGenerate, isLoading, error }: Landin
           id="productName"
           type="text"
           value={formData.productName}
-          onChange={(e) => setFormData((p) => ({ ...p, productName: e.target.value }))}
+          onChange={(e) => {
+            const val = e.target.value
+            setFormData((p) => ({ ...p, productName: val }))
+            onFormChange?.(!!(val.trim() && formData.productDescription.trim()))
+          }}
           placeholder="e.g. Acme Analytics"
           className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-500 ${
             errors.productName ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'
@@ -149,7 +154,11 @@ export default function LandingPageForm({ onGenerate, isLoading, error }: Landin
           id="productDescription"
           rows={4}
           value={formData.productDescription}
-          onChange={(e) => setFormData((p) => ({ ...p, productDescription: e.target.value }))}
+          onChange={(e) => {
+            const val = e.target.value
+            setFormData((p) => ({ ...p, productDescription: val }))
+            onFormChange?.(!!(formData.productName.trim() && val.trim()))
+          }}
           placeholder="Describe what your product does and the problem it solves…"
           className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-500 ${
             errors.productDescription ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'

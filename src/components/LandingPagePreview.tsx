@@ -462,7 +462,7 @@ export default function LandingPagePreview({ data, productName, templateId, isPa
               <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
                 {data.headline}
               </h1>
-              <div className="absolute -right-2 top-0 translate-x-full pl-1">
+              <div className="absolute -right-2 top-0 translate-x-full pl-1 hidden sm:block">
                 <CopyButton text={data.headline} copiedKey={copiedKey} id="headline" onCopy={handleCopy} light />
               </div>
             </div>
@@ -472,7 +472,7 @@ export default function LandingPagePreview({ data, productName, templateId, isPa
               <p className={`text-base sm:text-lg ${theme.heroSubtext}`}>
                 {data.subheadline}
               </p>
-              <div className="absolute -right-2 top-0 translate-x-full pl-1">
+              <div className="absolute -right-2 top-0 translate-x-full pl-1 hidden sm:block">
                 <CopyButton text={data.subheadline} copiedKey={copiedKey} id="subheadline" onCopy={handleCopy} light />
               </div>
             </div>
@@ -483,7 +483,7 @@ export default function LandingPagePreview({ data, productName, templateId, isPa
                 <button className={`w-full rounded-lg px-8 py-3 text-sm font-semibold shadow-md transition sm:w-auto ${theme.ctaButton}`}>
                   {data.cta}
                 </button>
-                <div className="absolute -right-2 top-1/2 -translate-y-1/2 translate-x-full pl-1">
+                <div className="absolute -right-2 top-1/2 -translate-y-1/2 translate-x-full pl-1 hidden sm:block">
                   <CopyButton text={data.cta} copiedKey={copiedKey} id="cta" onCopy={handleCopy} light />
                 </div>
               </div>
@@ -492,7 +492,7 @@ export default function LandingPagePreview({ data, productName, templateId, isPa
             {/* Social proof */}
             <div className="group relative mx-auto mt-4 inline-block">
               <p className={`text-xs sm:text-sm ${theme.heroSubtext} opacity-80`}>{data.socialProof}</p>
-              <div className="absolute -right-2 top-0 translate-x-full pl-1">
+              <div className="absolute -right-2 top-0 translate-x-full pl-1 hidden sm:block">
                 <CopyButton text={data.socialProof} copiedKey={copiedKey} id="socialProof" onCopy={handleCopy} light />
               </div>
             </div>

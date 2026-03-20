@@ -37,6 +37,7 @@ function GeneratePageInner() {
   const [activeTemplateId, setActiveTemplateId] = useState<TemplateId>(DEFAULT_TEMPLATE_ID)
   const [isPaidUser, setIsPaidUser] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [isFormFilled, setIsFormFilled] = useState(false)
 
   useEffect(() => {
     async function checkPlan() {
@@ -111,7 +112,7 @@ function GeneratePageInner() {
       </header>
 
       {/* Two-column layout */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 lg:pb-8 lg:px-8">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
           {/* Left: Form */}
           <div className="w-full lg:w-[420px] lg:flex-shrink-0">
@@ -120,6 +121,7 @@ function GeneratePageInner() {
                 onGenerate={handleGenerate}
                 isLoading={status === 'loading'}
                 error={status === 'error' ? apiError : null}
+                onFormChange={setIsFormFilled}
               />
             </div>
           </div>
@@ -138,6 +140,26 @@ function GeneratePageInner() {
           </div>
         </div>
       </div>
+      {/* Sticky mobile generate button */}
+      {isFormFilled && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white p-4 shadow-lg lg:hidden">
+          <button
+            type="submit"
+            form="generate-form"
+            disabled={status === 'loading'}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {status === 'loading' ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Generating…
+              </>
+            ) : (
+              'Generate landing page'
+            )}
+          </button>
+        </div>
+      )}
     </main>
     </ErrorBoundary>
   )
