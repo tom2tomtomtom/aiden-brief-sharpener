@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { canGenerate, incrementUsage, getUserPlan } from '@/lib/usage'
 import { getTemplate, TemplateId } from '@/lib/templates'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const client = new Anthropic()
 
@@ -36,6 +37,16 @@ interface GenerateResponse {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit check
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { allowed: rateLimitAllowed, retryAfter } = checkRateLimit(ip)
+  if (!rateLimitAllowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+    )
+  }
+
   // Auth check
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
