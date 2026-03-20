@@ -7,7 +7,7 @@ import LandingPagePreview, { GeneratedContent } from '@/components/LandingPagePr
 import { TemplateId, DEFAULT_TEMPLATE_ID } from '@/lib/templates'
 import { createClient } from '@/lib/supabase/client'
 
-type Status = 'idle' | 'loading' | 'done' | 'error'
+type Status = 'idle' | 'loading' | 'done' | 'error' | 'unauthenticated'
 
 export interface GenerateFormData {
   productName: string
@@ -25,11 +25,13 @@ export default function GeneratePage() {
   const [productName, setProductName] = useState('')
   const [activeTemplateId, setActiveTemplateId] = useState<TemplateId>(DEFAULT_TEMPLATE_ID)
   const [isPaidUser, setIsPaidUser] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
     async function checkPlan() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
       if (!user) return
       const { data } = await supabase
         .from('subscriptions')
@@ -44,6 +46,10 @@ export default function GeneratePage() {
   }, [])
 
   async function handleGenerate(formData: GenerateFormData) {
+    if (!isAuthenticated) {
+      setStatus('unauthenticated')
+      return
+    }
     setStatus('loading')
     setApiError(null)
     setProductName(formData.productName)
@@ -108,6 +114,7 @@ export default function GeneratePage() {
           {/* Right: Preview / Loading / Empty */}
           <div className="min-w-0 flex-1">
             {status === 'loading' && <LoadingState />}
+            {status === 'unauthenticated' && <AuthPrompt />}
             {status === 'done' && generatedData && (
               <LandingPagePreview data={generatedData} productName={productName} templateId={activeTemplateId} isPaidUser={isPaidUser} />
             )}
@@ -128,6 +135,45 @@ function LoadingState() {
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
       <p className="mt-4 text-sm font-medium text-gray-700">Generating your landing page…</p>
       <p className="mt-1 text-xs text-gray-400">This usually takes a few seconds</p>
+    </div>
+  )
+}
+
+function AuthPrompt() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 py-24 text-center px-8">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100">
+        <svg
+          className="h-7 w-7 text-indigo-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
+        </svg>
+      </div>
+      <h2 className="mt-4 text-lg font-semibold text-gray-900">Sign up free to generate your page</h2>
+      <p className="mt-2 text-sm text-gray-600 max-w-xs">
+        Get 3 free generations per month. No credit card required.
+      </p>
+      <Link
+        href="/login?redirect=/generate"
+        className="mt-6 inline-block rounded-xl bg-indigo-600 px-8 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+      >
+        Sign up free
+      </Link>
+      <p className="mt-3 text-xs text-gray-400">
+        Already have an account?{' '}
+        <Link href="/login?redirect=/generate" className="text-indigo-600 hover:underline">
+          Log in
+        </Link>
+      </p>
     </div>
   )
 }

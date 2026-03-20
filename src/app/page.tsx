@@ -202,7 +202,7 @@ export default function MarketingPage() {
                 href="/generate"
                 className="inline-block rounded-xl bg-indigo-600 px-8 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
               >
-                Try it free — no sign-up needed
+                Sign up free — 3 free generations
               </Link>
             </div>
           </div>
