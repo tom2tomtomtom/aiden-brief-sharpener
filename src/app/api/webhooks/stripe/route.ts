@@ -89,7 +89,7 @@ async function handleCheckoutCompleted(
   } else if (session.mode === 'subscription') {
     // Subscription (Pro plan) — full details come via customer.subscription.updated
     const subscriptionId = session.subscription as string
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription
 
     await supabase
       .from('subscriptions')
@@ -101,7 +101,9 @@ async function handleCheckoutCompleted(
           stripe_subscription_id: subscriptionId,
           stripe_price_id: subscription.items.data[0]?.price.id ?? null,
           status: subscription.status,
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          current_period_end: (subscription as any).current_period_end
+            ? new Date((subscription as any).current_period_end * 1000).toISOString()
+            : null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'user_id' }
@@ -121,7 +123,9 @@ async function handleSubscriptionUpdated(
       stripe_subscription_id: subscription.id,
       stripe_price_id: subscription.items.data[0]?.price.id ?? null,
       status: subscription.status,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      current_period_end: (subscription as any).current_period_end
+            ? new Date((subscription as any).current_period_end * 1000).toISOString()
+            : null,
       updated_at: new Date().toISOString(),
     })
     .eq('stripe_customer_id', customerId)
