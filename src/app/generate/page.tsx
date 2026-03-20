@@ -272,55 +272,93 @@ function GeneratePageInner() {
   )
 }
 
-const ANALYSIS_STEPS = [
-  { label: 'Reading your brief' },
-  { label: 'Extracting key elements' },
-  { label: 'Identifying gaps and tensions' },
-  { label: 'Building strategic analysis' },
-]
+function SkeletonBlock({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded bg-gray-200 ${className ?? ''}`} />
+}
 
 function LoadingState() {
-  const [currentStep, setCurrentStep] = useState(0)
-
-  useEffect(() => {
-    const timings = [1200, 2400, 3800]
-    const timeouts = timings.map((delay, i) =>
-      setTimeout(() => setCurrentStep(i + 1), delay)
-    )
-    return () => timeouts.forEach(clearTimeout)
-  }, [])
-
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white py-24 px-8 text-center shadow-sm">
-      <p className="mb-8 text-base font-semibold text-gray-800">Interrogating your brief…</p>
-      <ol className="w-full max-w-xs space-y-4 text-left">
-        {ANALYSIS_STEPS.map((step, i) => {
-          const isDone = i < currentStep
-          const isActive = i === currentStep
-          const isPending = i > currentStep
-          return (
-            <li
-              key={step.label}
-              className={`flex items-center gap-3 transition-opacity duration-500 ${isPending ? 'opacity-30' : 'opacity-100'}`}
-            >
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
-                {isDone ? (
-                  <svg className="h-5 w-5 text-indigo-600 transition-all duration-300" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                ) : isActive ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-                ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
-                )}
-              </span>
-              <span className={`text-sm font-medium transition-colors duration-300 ${isDone ? 'text-indigo-600' : isActive ? 'text-gray-900' : 'text-gray-400'}`}>
-                {step.label}
-              </span>
-            </li>
-          )
-        })}
-      </ol>
+    <div className="space-y-8">
+      {/* Score circle + action buttons */}
+      <div className="flex items-end justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 p-8">
+            <div className="animate-pulse">
+              <div className="relative inline-flex items-center justify-center">
+                <svg width="140" height="140" className="-rotate-90">
+                  <circle cx="70" cy="70" r="52" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                  <circle cx="70" cy="70" r="52" fill="none" stroke="#d1d5db" strokeWidth="10" strokeLinecap="round" strokeDasharray="326.7" strokeDashoffset="245" />
+                </svg>
+                <div className="absolute flex flex-col items-center gap-2">
+                  <SkeletonBlock className="h-9 w-12 rounded-md" />
+                  <SkeletonBlock className="h-3 w-8" />
+                </div>
+              </div>
+            </div>
+            <SkeletonBlock className="mt-3 h-4 w-24" />
+            <SkeletonBlock className="mt-1 h-3 w-28" />
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2 pb-2">
+          <SkeletonBlock className="h-7 w-28 rounded-lg" />
+          <SkeletonBlock className="h-7 w-24 rounded-lg" />
+        </div>
+      </div>
+
+      {/* Extracted brief fields */}
+      <section>
+        <div className="mb-4 flex items-center gap-3">
+          <SkeletonBlock className="h-6 w-36" />
+          <SkeletonBlock className="h-5 w-12 rounded-md" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[80, 60, 90, 50, 70, 65].map((w, i) => (
+            <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <SkeletonBlock className="h-3 w-20 mb-2" />
+              <SkeletonBlock className={`h-4 w-${w === 80 ? '[80%]' : w === 60 ? '[60%]' : w === 90 ? '[90%]' : w === 50 ? '[50%]' : w === 70 ? '[70%]' : '[65%]'}`} />
+              <SkeletonBlock className="h-4 w-[40%] mt-1.5" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Gap analysis */}
+      <section>
+        <div className="mb-4 flex items-center gap-3">
+          <SkeletonBlock className="h-6 w-32" />
+          <SkeletonBlock className="h-5 w-12 rounded-md" />
+        </div>
+        <div className="space-y-3">
+          {[['w-[75%]', 'w-[55%]'], ['w-[65%]', 'w-[45%]'], ['w-[80%]', 'w-[35%]']].map(([w1, w2], i) => (
+            <div key={i} className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <SkeletonBlock className="h-6 w-6 flex-shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <SkeletonBlock className="h-3 w-16" />
+                <SkeletonBlock className={`h-4 ${w1}`} />
+                <SkeletonBlock className={`h-4 ${w2}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Strategic tensions */}
+      <section>
+        <div className="mb-4 flex items-center gap-3">
+          <SkeletonBlock className="h-6 w-44" />
+          <SkeletonBlock className="h-5 w-12 rounded-md" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[['w-[70%]', 'w-full', 'w-[80%]'], ['w-[60%]', 'w-full', 'w-[65%]'], ['w-[75%]', 'w-full', 'w-[55%]'], ['w-[65%]', 'w-full', 'w-[70%]']].map(([w1, w2, w3], i) => (
+            <div key={i} className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+              <SkeletonBlock className="h-3 w-14 mb-2 bg-indigo-200" />
+              <SkeletonBlock className={`h-4 ${w1} bg-indigo-200`} />
+              <SkeletonBlock className={`h-4 ${w2} mt-1.5 bg-indigo-200`} />
+              <SkeletonBlock className={`h-4 ${w3} mt-1 bg-indigo-200`} />
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
