@@ -132,12 +132,55 @@ export default function GeneratePage() {
   )
 }
 
+const GENERATION_STEPS = [
+  { label: 'Analyzing your product' },
+  { label: 'Writing headlines' },
+  { label: 'Generating features and FAQ' },
+  { label: 'Polishing copy' },
+]
+
 function LoadingState() {
+  const [currentStep, setCurrentStep] = useState(0)
+
+  useEffect(() => {
+    const timings = [1200, 2400, 3800]
+    const timeouts = timings.map((delay, i) =>
+      setTimeout(() => setCurrentStep(i + 1), delay)
+    )
+    return () => timeouts.forEach(clearTimeout)
+  }, [])
+
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white py-24 text-center shadow-sm">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
-      <p className="mt-4 text-sm font-medium text-gray-700">Generating your landing page…</p>
-      <p className="mt-1 text-xs text-gray-400">This usually takes a few seconds</p>
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white py-24 px-8 text-center shadow-sm">
+      <p className="mb-8 text-base font-semibold text-gray-800">Generating your landing page…</p>
+      <ol className="w-full max-w-xs space-y-4 text-left">
+        {GENERATION_STEPS.map((step, i) => {
+          const isDone = i < currentStep
+          const isActive = i === currentStep
+          const isPending = i > currentStep
+          return (
+            <li
+              key={step.label}
+              className={`flex items-center gap-3 transition-opacity duration-500 ${isPending ? 'opacity-30' : 'opacity-100'}`}
+            >
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                {isDone ? (
+                  <svg className="h-5 w-5 text-indigo-600 transition-all duration-300" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : isActive ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
+                )}
+              </span>
+              <span className={`text-sm font-medium transition-colors duration-300 ${isDone ? 'text-indigo-600' : isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                {step.label}
+              </span>
+            </li>
+          )
+        })}
+      </ol>
     </div>
   )
 }
