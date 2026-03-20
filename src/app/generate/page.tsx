@@ -29,6 +29,7 @@ function GeneratePageInner() {
   const { showToast } = useToast()
   const [status, setStatus] = useState<Status>('idle')
   const [analysisData, setAnalysisData] = useState<BriefAnalysisData | null>(null)
+  const [generationId, setGenerationId] = useState<string | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [isFormFilled, setIsFormFilled] = useState(false)
@@ -71,6 +72,7 @@ function GeneratePageInner() {
 
       const data = await response.json()
       setAnalysisData(data as BriefAnalysisData)
+      setGenerationId(data.generationId ?? null)
       setStatus('done')
       showToast('Brief analysis complete!')
     } catch (err) {
@@ -130,14 +132,17 @@ function GeneratePageInner() {
                       Re-interrogate
                     </button>
                     <button
-                      onClick={() => { setAnalysisData(null); setStatus('idle'); setLastFormData(null) }}
+                      onClick={() => { setAnalysisData(null); setGenerationId(null); setStatus('idle'); setLastFormData(null) }}
                       className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
                     >
                       Start over
                     </button>
                   </div>
                 </div>
-                <BriefAnalysis data={analysisData} />
+                <BriefAnalysis
+                  data={analysisData}
+                  previewUrl={generationId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/preview/${generationId}` : undefined}
+                />
               </div>
             )}
             {(status === 'idle' || status === 'error') && !analysisData && (
