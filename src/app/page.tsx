@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import FAQAccordion from '@/components/FAQAccordion'
+import TryDemoSection from '@/components/TryDemoSection'
 
 const steps = [
   {
@@ -256,6 +257,9 @@ export default function MarketingPage() {
           </div>
         </div>
       </section>
+
+      {/* Try it now demo */}
+      <TryDemoSection />
 
       {/* Pricing */}
       <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-8">
