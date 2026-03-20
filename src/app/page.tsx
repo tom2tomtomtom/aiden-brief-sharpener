@@ -1,82 +1,58 @@
 import Link from 'next/link'
 import FAQAccordion from '@/components/FAQAccordion'
 
-const demoInput = {
-  productName: 'FlowDesk',
-  tagline: 'Project management for async-first remote teams',
-  audience: 'Startup founders and distributed engineering teams',
-  features: 'Smart task automation, time-zone aware scheduling, async video updates, one-click standups',
-  template: 'SaaS',
-  tone: 'Professional but approachable',
-}
-
-const demoOutput = {
-  headline: 'Ship projects faster — without the 9am standup',
-  subheadline: 'FlowDesk keeps your remote team in sync across time zones. Automate the busywork. Focus on the work that ships.',
-  features: [
-    { icon: '⚡', title: 'Smart task automation', description: 'Recurring tasks, status updates, and blockers handled automatically so you never miss a deadline.' },
-    { icon: '🌍', title: 'Time-zone aware scheduling', description: 'FlowDesk knows where your team is. Meetings, reviews, and reminders land at the right local time — always.' },
-    { icon: '🎬', title: 'Async video updates', description: 'Replace status meetings with 90-second video updates your team can watch when they\'re ready.' },
-  ],
-  faq: [
-    { question: 'Does it work for teams spread across many time zones?', answer: 'Absolutely. FlowDesk was built for async-first teams. Every feature — from scheduling to notifications — is designed around time-zone awareness.' },
-    { question: 'How is FlowDesk different from Jira or Linear?', answer: 'FlowDesk automates the coordination layer that tools like Jira leave to humans. Less ceremony, more shipping.' },
-  ],
-  cta: 'Start your free 14-day trial',
-  socialProof: 'Trusted by 800+ remote engineering teams',
-  badge: 'AI-generated in 8 seconds',
-}
-
-const socialProofText = '1,200+ founders and freelancers trust AIDEN'
-
 const steps = [
   {
     number: '01',
-    title: 'Describe your product',
-    description: 'Enter your product name, what it does, who it is for, and the tone you want. Takes about 60 seconds.',
+    title: 'Paste your brief',
+    description: 'Drop in your campaign brief, creative brief, or strategy document. Any format works — rough notes to polished docs.',
   },
   {
     number: '02',
-    title: 'AIDEN writes the copy',
-    description: 'Claude AI generates headlines, feature descriptions, FAQs, and a CTA — all matched to your chosen template.',
+    title: 'AIDEN interrogates it',
+    description: '340+ creative phantoms — strategists, planners, and creatives — stress-test every line. They find what you missed and why it matters.',
   },
   {
     number: '03',
-    title: 'Download and publish',
-    description: 'Preview the page, tweak if needed, then download a ready-to-ship HTML file or copy the content.',
+    title: 'Get gaps identified and brief rewritten',
+    description: 'Receive a full gap report and a sharpened brief ready to brief your team. Clear, specific, and built to produce better creative.',
   },
 ]
 
-const testimonials = [
-  {
-    quote: "I launched three new product lines this quarter and AIDEN wrote the landing pages for all of them. What used to take a week of back-and-forth with a copywriter now takes me an afternoon.",
-    name: 'Marcus Chen',
-    role: 'Founder & CEO',
-    company: 'Launchpad SaaS',
-  },
-  {
-    quote: "My clients expect polished copy fast. AIDEN lets me deliver a draft landing page in the same meeting where we align on positioning. It's become my secret weapon for client onboarding.",
-    name: 'Priya Nair',
-    role: 'Freelance Brand Designer',
-    company: 'Studio Nair',
-  },
-  {
-    quote: "We run campaigns for 30+ clients a month. AIDEN cut our landing page production time by 70%. The copy quality is genuinely strong — we barely edit it before handing off to clients.",
-    name: 'Jordan Ellis',
-    role: 'Director of Growth',
-    company: 'Orbit Digital Agency',
-  },
-]
+const weakBrief = {
+  title: 'Original brief',
+  content: [
+    { label: 'Objective', value: 'Increase brand awareness and drive sales for our new product launch.' },
+    { label: 'Audience', value: 'Young adults who like our brand.' },
+    { label: 'Key message', value: 'Our product is innovative and high quality.' },
+    { label: 'Deliverables', value: 'Social posts, some video, maybe a campaign.' },
+    { label: 'Tone', value: 'Fun and engaging.' },
+  ],
+  badge: 'Weak brief',
+  badgeColor: 'bg-red-100 text-red-700',
+}
 
-const comparisonRows = [
-  { feature: 'Price', aiden: '$19 one-time', chatgpt: '$20/mo', copyai: '$49/mo', freelancer: '$500–2,000' },
-  { feature: 'Live Preview', aiden: true, chatgpt: false, copyai: false, freelancer: false },
-  { feature: 'HTML Export', aiden: true, chatgpt: false, copyai: false, freelancer: true },
-  { feature: 'Landing Page Specific', aiden: true, chatgpt: false, copyai: false, freelancer: true },
-  { feature: 'Time to Page', aiden: '30 seconds', chatgpt: '5–10 min', copyai: '3–5 min', freelancer: '3–7 days' },
-  { feature: 'No Subscription', aiden: true, chatgpt: false, copyai: false, freelancer: true },
-]
+const strongBrief = {
+  title: 'AIDEN-sharpened brief',
+  content: [
+    { label: 'Objective', value: 'Drive 12% uplift in trial sign-ups among lapsed users aged 25–34 within 6 weeks of launch.' },
+    { label: 'Audience', value: 'Lapsed users (12–18 months inactive) who tried the product but never converted — they need a reason to believe again, not a reason to discover.' },
+    { label: 'Key message', value: 'This is not the product you left. Here\'s the one thing that\'s actually different now.' },
+    { label: 'Deliverables', value: '3× paid social (Meta/TikTok), 1× 30s hero film, 6× retargeting banners. All laddering to a dedicated landing page.' },
+    { label: 'Tone', value: 'Direct and honest. No hype. Like a friend who knows they let you down and is showing you why it\'s worth another chance.' },
+  ],
+  badge: 'AIDEN-sharpened',
+  badgeColor: 'bg-green-100 text-green-700',
+}
 
+const gapTypes = [
+  { icon: '👤', title: 'Missing audience insight', description: 'Demographics without psychology. "25–34 urban professionals" is not an insight. AIDEN finds who they really are and what actually moves them.' },
+  { icon: '🎯', title: 'Vague objectives', description: '"Increase awareness" is not a brief objective. AIDEN rewrites it as a measurable outcome with a timeframe and a success bar.' },
+  { icon: '⚡', title: 'No tension or conflict', description: 'Great briefs have a problem worth solving. AIDEN identifies the cultural or category tension your creative should exploit.' },
+  { icon: '📋', title: 'Weak deliverables', description: 'Briefs that say "social content, maybe video" are briefs that produce forgettable work. AIDEN specifies format, platform, and purpose for each asset.' },
+  { icon: '💬', title: 'Fuzzy tone of voice', description: '"Fun and engaging" briefs produce average creative. AIDEN translates tone into a behavioural guide your team can actually follow.' },
+  { icon: '🔗', title: 'No single-minded proposition', description: 'Briefs that try to say five things say nothing. AIDEN isolates the one thing worth saying and builds a brief around it.' },
+]
 
 export default function MarketingPage() {
   return (
@@ -109,23 +85,23 @@ export default function MarketingPage() {
       <section className="bg-gradient-to-b from-indigo-50 to-white px-4 pt-20 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 mb-6">
-            Powered by Claude AI
+            340+ creative phantoms · Powered by Claude AI
           </div>
           <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl leading-tight">
-            Landing pages that{' '}
-            <span className="text-indigo-600">convert</span>,<br />
-            written in seconds
+            Your brief is holding{' '}
+            <span className="text-indigo-600">you back.</span>
+            <br />
+            AIDEN will show you why.
           </h1>
           <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Describe your product. AIDEN generates professional, conversion-optimised copy and delivers a
-            ready-to-publish HTML page — no designer or copywriter needed.
+            Brief Intelligence interrogates your brief the way the best strategists do — relentlessly, specifically, and without mercy. Find every gap before it becomes a missed opportunity.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/generate"
               className="w-full sm:w-auto rounded-xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-700 transition-colors"
             >
-              Generate my landing page — free
+              Interrogate your brief — free
             </Link>
             <Link
               href="/pricing"
@@ -134,14 +110,14 @@ export default function MarketingPage() {
               See pricing
             </Link>
           </div>
-          <p className="mt-4 text-sm text-gray-400">No credit card required · 3 free generations per month</p>
+          <p className="mt-4 text-sm text-gray-400">No credit card required · 3 free analyses per month</p>
         </div>
       </section>
 
       {/* Social proof bar */}
       <section className="border-y border-gray-100 bg-gray-50 py-5">
         <p className="text-center text-sm font-medium text-gray-500">
-          {socialProofText} &nbsp;·&nbsp; Built with Claude AI &nbsp;·&nbsp; Export to HTML in one click
+          Used by strategists, planners, and creative directors &nbsp;·&nbsp; 340+ creative phantoms &nbsp;·&nbsp; Built with Claude AI
         </p>
       </section>
 
@@ -152,7 +128,7 @@ export default function MarketingPage() {
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               How it works
             </h2>
-            <p className="mt-4 text-lg text-gray-600">Three steps from idea to live page.</p>
+            <p className="mt-4 text-lg text-gray-600">Three steps from weak brief to sharp strategy.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {steps.map((step) => (
@@ -166,69 +142,31 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* Before / After demo */}
+      {/* Before / After */}
       <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-14">
             <span className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 mb-4">
-              Live example
+              Real example
             </span>
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              From idea to landing page in seconds
+              The difference a sharp brief makes
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-xl mx-auto">
-              Fill in the form. AIDEN writes the copy. Here&apos;s exactly what that looks like for a real SaaS product.
+              See exactly how AIDEN transforms a vague, underspecified brief into something your team can actually use.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
-            {/* Input side */}
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-widest">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">1</span>
-                You fill in the form
-              </div>
-              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="border-b border-gray-100 bg-gray-50 px-5 py-3 flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-red-300" />
-                  <span className="h-3 w-3 rounded-full bg-yellow-300" />
-                  <span className="h-3 w-3 rounded-full bg-green-300" />
-                  <span className="ml-2 text-xs text-gray-400">aiden.so/generate</span>
-                </div>
-                <div className="px-6 py-6 space-y-5">
-                  {[
-                    { label: 'Product name', value: demoInput.productName },
-                    { label: 'Tagline', value: demoInput.tagline },
-                    { label: 'Target audience', value: demoInput.audience },
-                    { label: 'Key features', value: demoInput.features },
-                    { label: 'Template', value: demoInput.template },
-                    { label: 'Tone of voice', value: demoInput.tone },
-                  ].map((field) => (
-                    <div key={field.label}>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1.5">{field.label}</label>
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-800">
-                        {field.value}
-                      </div>
-                    </div>
-                  ))}
-                  <div className="pt-2">
-                    <div className="w-full rounded-xl bg-indigo-600 py-3 text-center text-sm font-semibold text-white">
-                      Generate landing page ✨
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Output side */}
+            {/* Weak brief */}
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-widest">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">2</span>
-                  AIDEN generates the page
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">1</span>
+                  {weakBrief.title}
                 </div>
-                <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
-                  {demoOutput.badge}
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${weakBrief.badgeColor}`}>
+                  {weakBrief.badge}
                 </span>
               </div>
               <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -236,154 +174,135 @@ export default function MarketingPage() {
                   <span className="h-3 w-3 rounded-full bg-red-300" />
                   <span className="h-3 w-3 rounded-full bg-yellow-300" />
                   <span className="h-3 w-3 rounded-full bg-green-300" />
-                  <span className="ml-2 text-xs text-gray-400">preview — FlowDesk landing page</span>
+                  <span className="ml-2 text-xs text-gray-400">campaign-brief-v3-FINAL.doc</span>
                 </div>
-
-                {/* Generated hero */}
-                <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-600 px-6 py-10 text-white text-center">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-indigo-300 mb-2">{demoOutput.socialProof}</p>
-                  <h3 className="text-2xl font-extrabold leading-tight mb-3">{demoOutput.headline}</h3>
-                  <p className="text-indigo-100 text-sm max-w-sm mx-auto mb-5 leading-relaxed">{demoOutput.subheadline}</p>
-                  <div className="inline-block rounded-lg bg-white px-5 py-2 text-sm font-semibold text-indigo-700 shadow-md">
-                    {demoOutput.cta}
-                  </div>
-                </div>
-
-                {/* Generated features */}
-                <div className="px-6 py-7">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-5">Key features</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {demoOutput.features.map((f) => (
-                      <div key={f.title} className="rounded-xl bg-indigo-50 p-4">
-                        <div className="text-xl mb-2">{f.icon}</div>
-                        <h4 className="text-xs font-semibold text-gray-900 mb-1">{f.title}</h4>
-                        <p className="text-xs text-gray-600 leading-relaxed">{f.description}</p>
+                <div className="px-6 py-6 space-y-5">
+                  {weakBrief.content.map((field) => (
+                    <div key={field.label}>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1.5">{field.label}</label>
+                      <div className="rounded-lg border border-red-100 bg-red-50/50 px-3.5 py-2.5 text-sm text-gray-700">
+                        {field.value}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
+            </div>
 
-                {/* Generated FAQ */}
-                <div className="border-t border-gray-100 px-6 py-6">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">FAQ</p>
-                  <div className="space-y-3">
-                    {demoOutput.faq.map((item) => (
-                      <div key={item.question} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-4">
-                        <p className="text-xs font-semibold text-gray-900 mb-1">{item.question}</p>
-                        <p className="text-xs text-gray-600 leading-relaxed">{item.answer}</p>
+            {/* Sharp brief */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-widest">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">2</span>
+                  {strongBrief.title}
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${strongBrief.badgeColor}`}>
+                  {strongBrief.badge}
+                </span>
+              </div>
+              <div className="rounded-2xl border border-indigo-100 bg-white shadow-sm overflow-hidden">
+                <div className="border-b border-indigo-50 bg-indigo-50/50 px-5 py-3 flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-red-300" />
+                  <span className="h-3 w-3 rounded-full bg-yellow-300" />
+                  <span className="h-3 w-3 rounded-full bg-green-300" />
+                  <span className="ml-2 text-xs text-gray-400">brief-intelligence-output.pdf</span>
+                </div>
+                <div className="px-6 py-6 space-y-5">
+                  {strongBrief.content.map((field) => (
+                    <div key={field.label}>
+                      <label className="block text-xs font-semibold text-indigo-600 mb-1.5">{field.label}</label>
+                      <div className="rounded-lg border border-indigo-100 bg-indigo-50/30 px-3.5 py-2.5 text-sm text-gray-800 leading-relaxed">
+                        {field.value}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* CTA below demo */}
           <div className="mt-12 text-center">
-            <p className="text-sm text-gray-500 mb-4">Your product. Your copy. Ready in under a minute.</p>
+            <p className="text-sm text-gray-500 mb-4">Your brief. Interrogated. Sharpened. Ready to brief your team.</p>
             <Link
               href="/generate"
               className="inline-block rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 transition-colors"
             >
-              Generate my landing page — free
+              Interrogate your brief — free
             </Link>
             <p className="mt-3 text-xs text-gray-400">No credit card required</p>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* What AIDEN finds */}
       <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-5xl">
           <div className="text-center mb-14">
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              What our users are saying
+              What AIDEN finds
             </h2>
-            <p className="mt-4 text-lg text-gray-600">Founders, freelancers, and agencies ship faster with AIDEN.</p>
+            <p className="mt-4 text-lg text-gray-600 max-w-xl mx-auto">
+              Six types of gaps that kill creative work before it starts. AIDEN identifies all of them.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div key={t.name} className="flex flex-col rounded-2xl border border-gray-200 bg-white p-7 shadow-sm">
-                <p className="text-gray-700 text-sm leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{t.name}</p>
-                    <p className="text-xs text-gray-500">{t.role} · {t.company}</p>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {gapTypes.map((gap) => (
+              <div key={gap.title} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="text-2xl mb-3">{gap.icon}</div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">{gap.title}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">{gap.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Comparison table */}
+      {/* Pricing */}
       <section className="bg-gray-50 px-4 py-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              How AIDEN compares
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              The fastest, most affordable way to get a conversion-ready landing page.
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-500">Feature</th>
-                  <th className="text-center py-3 px-4 font-bold text-indigo-600">AIDEN</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-500">ChatGPT</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-500">Copy.ai</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-500">Freelancer</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparisonRows.map((row) => (
-                  <tr key={row.feature} className="border-b border-gray-100">
-                    <td className="py-3 px-4 font-medium text-gray-900">{row.feature}</td>
-                    {(['aiden', 'chatgpt', 'copyai', 'freelancer'] as const).map((col) => {
-                      const val = row[col]
-                      return (
-                        <td key={col} className={`text-center py-3 px-4 ${col === 'aiden' ? 'bg-indigo-50/50 font-semibold text-gray-900' : 'text-gray-600'}`}>
-                          {typeof val === 'boolean' ? (
-                            val ? <span className="text-green-600 text-lg">&#10003;</span> : <span className="text-red-400 text-lg">&#10007;</span>
-                          ) : val}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing teaser */}
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Simple pricing, no surprises
+            Simple pricing
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-xl mx-auto">
-            Start free with 3 generations a month. Pay once for a single page or go unlimited with Pro.
+            Start free. Go Pro when your briefs need to be immaculate.
           </p>
 
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
             {[
-              { name: 'Free', price: '$0', period: '', description: '3 generations / month', cta: 'Start free', href: '/generate', highlight: false },
-              { name: 'Single', price: '$19', period: 'one-time', description: '1 generation, no attribution', cta: 'Buy now', href: '/pricing', highlight: true },
-              { name: 'Pro', price: '$39', period: '/ month', description: 'Unlimited generations', cta: 'Go Pro', href: '/pricing', highlight: false },
+              {
+                name: 'Free',
+                price: '£0',
+                period: '',
+                description: '3 analyses per month',
+                features: [
+                  'Full gap analysis report',
+                  'Brief rewrite included',
+                  'AIDEN branding on output',
+                ],
+                cta: 'Start free',
+                href: '/generate',
+                highlight: false,
+              },
+              {
+                name: 'Pro',
+                price: '£49',
+                period: '/ brief',
+                description: 'Clean output, no attribution',
+                features: [
+                  'Full gap analysis report',
+                  'Brief rewrite included',
+                  'PDF export',
+                  'No AIDEN branding',
+                  'Priority processing',
+                ],
+                cta: 'Go Pro',
+                href: '/pricing',
+                highlight: true,
+              },
             ].map((tier) => (
               <div
                 key={tier.name}
-                className={`rounded-2xl p-6 ${
+                className={`rounded-2xl p-7 ${
                   tier.highlight
                     ? 'bg-indigo-600 text-white shadow-xl ring-2 ring-indigo-600'
                     : 'bg-white border border-gray-200 shadow-sm'
@@ -394,9 +313,23 @@ export default function MarketingPage() {
                 </p>
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-3xl font-bold">{tier.price}</span>
-                  {tier.period && <span className={`text-sm ${tier.highlight ? 'text-indigo-200' : 'text-gray-500'}`}>{tier.period}</span>}
+                  {tier.period && (
+                    <span className={`text-sm ${tier.highlight ? 'text-indigo-200' : 'text-gray-500'}`}>
+                      {tier.period}
+                    </span>
+                  )}
                 </div>
-                <p className={`text-sm mb-5 ${tier.highlight ? 'text-indigo-100' : 'text-gray-500'}`}>{tier.description}</p>
+                <p className={`text-sm mb-5 ${tier.highlight ? 'text-indigo-100' : 'text-gray-500'}`}>
+                  {tier.description}
+                </p>
+                <ul className={`space-y-2 mb-6 text-sm ${tier.highlight ? 'text-indigo-100' : 'text-gray-600'}`}>
+                  {tier.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2">
+                      <span className={`text-base leading-none ${tier.highlight ? 'text-indigo-300' : 'text-indigo-500'}`}>&#10003;</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
                 <Link
                   href={tier.href}
                   className={`block text-center rounded-lg py-2.5 text-sm font-semibold transition-colors ${
@@ -426,17 +359,17 @@ export default function MarketingPage() {
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Your landing page is 60 seconds away
+            Your brief deserves better
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            No copywriter. No designer. No waiting. Just a great landing page.
+            Stop briefing your team with gaps. AIDEN finds them first.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/generate"
               className="w-full sm:w-auto rounded-xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-700 transition-colors"
             >
-              Generate my landing page — free
+              Interrogate your brief — free
             </Link>
             <Link
               href="/login"
@@ -445,7 +378,7 @@ export default function MarketingPage() {
               Sign in
             </Link>
           </div>
-          <p className="mt-4 text-sm text-gray-400">No credit card required · 3 free generations per month</p>
+          <p className="mt-4 text-sm text-gray-400">No credit card required · 3 free analyses per month</p>
         </div>
       </section>
 
@@ -456,7 +389,7 @@ export default function MarketingPage() {
           <div className="flex items-center gap-6">
             <Link href="/pricing" className="hover:text-gray-600 transition-colors">Pricing</Link>
             <Link href="/login" className="hover:text-gray-600 transition-colors">Log in</Link>
-            <Link href="/generate" className="hover:text-gray-600 transition-colors">Generate</Link>
+            <Link href="/generate" className="hover:text-gray-600 transition-colors">Interrogate</Link>
             <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy</Link>
           </div>
