@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { validateEnvOnStartup } from '@/lib/env'
+import { GoogleAnalytics } from '@/components/Analytics'
 import './globals.css'
 
 validateEnvOnStartup()
@@ -52,6 +53,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <GoogleAnalytics />
         <Analytics />
         <SpeedInsights />
       </body>
