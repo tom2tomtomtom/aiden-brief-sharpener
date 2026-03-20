@@ -7,6 +7,7 @@ export interface GeneratedContent {
   headline: string
   subheadline: string
   features: Array<{ title: string; description: string }>
+  howItWorks?: Array<{ step: number; title: string; description: string }>
   faq: Array<{ question: string; answer: string }>
   cta: string
   socialProof: string

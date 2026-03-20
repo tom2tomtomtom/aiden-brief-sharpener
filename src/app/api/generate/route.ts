@@ -27,10 +27,17 @@ interface FAQ {
   answer: string
 }
 
+interface HowItWorksStep {
+  step: number
+  title: string
+  description: string
+}
+
 interface GenerateResponse {
   headline: string
   subheadline: string
   features: Feature[]
+  howItWorks: HowItWorksStep[]
   faq: FAQ[]
   cta: string
   socialProof: string
@@ -92,34 +99,52 @@ export async function POST(request: NextRequest) {
   const filledFeatures = (features ?? []).filter((f) => f?.trim())
   const tpl = getTemplate(template as TemplateId | undefined)
 
-  const prompt = `${tpl.promptInstructions}
+  const prompt = `You are an expert direct-response copywriter who specialises in high-converting SaaS and product landing pages. Your copy is specific, benefit-driven, and emotionally resonant. You never write generic filler.
 
-Product name: ${productName}
-Description: ${productDescription}
-${targetAudience ? `Target audience: ${targetAudience}` : ''}
-${filledFeatures.length > 0 ? `Key features: ${filledFeatures.join(', ')}` : ''}
-Tone: ${tone}
+${tpl.promptInstructions}
 
-Return a JSON object with exactly this structure (no markdown, just raw JSON):
+PRODUCT BRIEF
+- Product name: ${productName}
+- Description: ${productDescription}
+${targetAudience ? `- Target audience: ${targetAudience}` : ''}
+${filledFeatures.length > 0 ? `- Key features to highlight: ${filledFeatures.join(', ')}` : ''}
+- Tone: ${tone}
+
+COPYWRITING RULES
+1. HEADLINE — Use the PAS (Problem-Agitate-Solution) framework compressed into a single punchy line (under 10 words). Lead with the pain or desired outcome, not the product name. Make the reader feel seen.
+2. SUBHEADLINE — Agitate the problem or amplify the promise in 1–2 sentences (under 25 words). Be specific. Mention a concrete result where possible.
+3. FEATURES — Write exactly 4 features. Each feature title should name the outcome, not the tool (e.g. "Ship faster" not "Auto-deploy"). Each description explains the specific mechanism that delivers that benefit in one sentence. No generic superlatives.
+4. HOW IT WORKS — Explain the product in exactly 3 sequential steps. Each step has a short action title (3–5 words) and a one-sentence description of what happens and why it matters. Steps must feel logical and effortless.
+5. FAQ — Write 3–4 FAQ items that address the most common objections or points of confusion a buyer would have before purchasing. Answers should be reassuring and specific.
+6. CTA — A punchy call-to-action button label (2–5 words). Action verb first.
+7. SOCIAL PROOF — Write a specific, credible social proof statement. Include a plausible but realistic number of users, companies, or a measurable result (e.g. "Trusted by 1,200+ SaaS teams to cut onboarding time by 40%"). Make it feel earned, not invented.
+
+Return ONLY a raw JSON object with no markdown, no code fences, no commentary — just the JSON:
 {
-  "headline": "compelling headline under 10 words",
-  "subheadline": "supporting subheadline under 20 words",
+  "headline": "under 10 words using PAS framework",
+  "subheadline": "1-2 sentences agitating the problem or amplifying the promise",
   "features": [
-    { "title": "feature name", "description": "one-sentence benefit description" }
+    { "title": "outcome-focused feature title", "description": "one sentence explaining the mechanism and benefit" },
+    { "title": "outcome-focused feature title", "description": "one sentence explaining the mechanism and benefit" },
+    { "title": "outcome-focused feature title", "description": "one sentence explaining the mechanism and benefit" },
+    { "title": "outcome-focused feature title", "description": "one sentence explaining the mechanism and benefit" }
+  ],
+  "howItWorks": [
+    { "step": 1, "title": "short action title", "description": "one sentence describing what happens and why it matters" },
+    { "step": 2, "title": "short action title", "description": "one sentence describing what happens and why it matters" },
+    { "step": 3, "title": "short action title", "description": "one sentence describing what happens and why it matters" }
   ],
   "faq": [
-    { "question": "common question", "answer": "concise answer" }
+    { "question": "objection or confusion a buyer would have", "answer": "specific, reassuring answer" }
   ],
-  "cta": "call-to-action button text",
-  "socialProof": "placeholder social proof text (e.g. '2,000+ teams already using ${productName}')"
-}
-
-Generate 3-5 features and 3-4 FAQ items. Match the ${tone} tone throughout.`
+  "cta": "action verb first, 2-5 words",
+  "socialProof": "specific social proof with a real-feeling number and measurable result"
+}`
 
   try {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
     })
 
