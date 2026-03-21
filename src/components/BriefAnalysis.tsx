@@ -56,10 +56,12 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-function getScoreColor(score: number): { text: string; stroke: string; bg: string; label: string } {
-  if (score >= 71) return { text: 'text-green-600', stroke: '#16a34a', bg: 'bg-green-50', label: 'Strong brief' }
-  if (score >= 40) return { text: 'text-amber-600', stroke: '#d97706', bg: 'bg-amber-50', label: 'Needs work' }
-  return { text: 'text-red-600', stroke: '#dc2626', bg: 'bg-red-50', label: 'Incomplete brief' }
+function getScoreColor(score: number): { text: string; stroke: string; bg: string; label: string; interpretation: string } {
+  if (score >= 86) return { text: 'text-emerald-600', stroke: '#059669', bg: 'bg-emerald-50', label: 'Strong brief', interpretation: 'Excellent' }
+  if (score >= 71) return { text: 'text-green-600', stroke: '#16a34a', bg: 'bg-green-50', label: 'Strong brief', interpretation: 'Good' }
+  if (score >= 51) return { text: 'text-amber-600', stroke: '#d97706', bg: 'bg-amber-50', label: 'Needs work', interpretation: 'Average' }
+  if (score >= 31) return { text: 'text-orange-600', stroke: '#ea580c', bg: 'bg-orange-50', label: 'Needs work', interpretation: 'Below Average' }
+  return { text: 'text-red-600', stroke: '#dc2626', bg: 'bg-red-50', label: 'Incomplete brief', interpretation: 'Needs Work' }
 }
 
 const CONFETTI_DOTS = [
@@ -106,7 +108,7 @@ function ScoreCircle({ score, showCelebration }: { score: number; showCelebratio
     }
   }, [score, circumference])
 
-  const { text, stroke, bg, label } = getScoreColor(score)
+  const { text, stroke, bg, label, interpretation } = getScoreColor(score)
 
   return (
     <div className={`flex flex-col items-center justify-center rounded-2xl ${bg} border border-gray-200 p-8`}>
@@ -121,6 +123,7 @@ function ScoreCircle({ score, showCelebration }: { score: number; showCelebratio
         <div className="absolute flex flex-col items-center">
           <span className={`text-4xl font-bold ${text}`}>{displayScore}</span>
           <span className="text-xs text-gray-500 font-medium">/100</span>
+          <span className={`text-xs font-medium ${text}`}>{interpretation}</span>
         </div>
         {showCelebration && (
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
