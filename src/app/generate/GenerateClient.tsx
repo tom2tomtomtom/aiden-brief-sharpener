@@ -115,6 +115,9 @@ function GeneratePageInner() {
       })
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('You have reached your analysis limit. Please wait a moment before trying again.')
+        }
         const err = await response.json()
         throw new Error(err.error || 'Analysis failed')
       }
