@@ -40,6 +40,7 @@ function GeneratePageInner() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [isFormFilled, setIsFormFilled] = useState(false)
   const [lastFormData, setLastFormData] = useState<GenerateFormData | null>(null)
+  const [completedAt, setCompletedAt] = useState<string | null>(null)
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
   const [isFirstAnalysis, setIsFirstAnalysis] = useState(false)
@@ -126,6 +127,7 @@ function GeneratePageInner() {
       setAnalysisData(data as BriefAnalysisData)
       setGenerationId(data.generationId ?? null)
       setStatus('done')
+      setCompletedAt(new Date().toLocaleTimeString())
       setPlanInfo(prev => prev && prev.plan !== 'pro' ? { ...prev, used: prev.used + 1 } : prev)
       showToast('Brief analysis complete!')
       if (!localStorage.getItem('aiden_first_analysis_done')) {
@@ -304,6 +306,9 @@ function GeneratePageInner() {
                       Start over
                     </button>
                   </div>
+                  {completedAt && (
+                    <span className="text-xs text-gray-400">Analysed at {completedAt}</span>
+                  )}
                 </div>
                 <BriefAnalysis
                   data={analysisData}
