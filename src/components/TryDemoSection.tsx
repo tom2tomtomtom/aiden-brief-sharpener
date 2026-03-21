@@ -131,6 +131,49 @@ export default function TryDemoSection() {
           </button>
         </div>
 
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="space-y-5 animate-pulse">
+            {/* Score skeleton */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="h-3 w-32 rounded bg-gray-200 mb-4" />
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-36 rounded-xl bg-gray-200" />
+              </div>
+              <div className="mt-3 h-3 w-3/4 rounded bg-gray-200" />
+            </div>
+
+            {/* Gaps skeleton */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="h-3 w-40 rounded bg-gray-200 mb-4" />
+              <div className="space-y-2.5">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <div className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-gray-200" />
+                    <div className="h-3 flex-1 rounded bg-gray-200" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Strategic analysis skeleton */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="h-3 w-36 rounded bg-gray-200 mb-4" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+                    <div className="h-2.5 w-24 rounded bg-indigo-200 mb-2" />
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full rounded bg-indigo-200" />
+                      <div className="h-2.5 w-4/5 rounded bg-indigo-200" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 mb-6">
