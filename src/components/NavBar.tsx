@@ -15,9 +15,9 @@ export default function NavBar() {
   const [open, setOpen] = useState(false)
 
   return (
-    <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+    <nav className="border-b-2 border-red-hot bg-black-deep sticky top-0 z-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-        <span className="text-lg font-bold tracking-tight text-gray-900">AIDEN</span>
+        <span className="text-lg font-bold tracking-tight text-red-hot uppercase">AIDEN</span>
 
         {/* Desktop links */}
         <div className="hidden sm:flex items-center gap-4">
@@ -25,14 +25,14 @@ export default function NavBar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              className="text-sm font-medium text-white-muted hover:text-orange-accent transition-colors"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="/generate"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+            className="bg-red-hot px-4 py-2 text-sm font-semibold text-white-full hover:bg-red-dim transition-colors"
           >
             Try free
           </Link>
@@ -42,7 +42,7 @@ export default function NavBar() {
         <div className="flex sm:hidden items-center gap-2">
           <Link
             href="/generate"
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+            className="bg-red-hot px-3 py-1.5 text-sm font-semibold text-white-full hover:bg-red-dim transition-colors"
           >
             Try free
           </Link>
@@ -50,7 +50,7 @@ export default function NavBar() {
             onClick={() => setOpen((prev) => !prev)}
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
-            className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="p-2 text-white-muted hover:text-orange-accent transition-colors"
           >
             {open ? (
               /* X icon */
@@ -72,13 +72,13 @@ export default function NavBar() {
 
       {/* Mobile slide-down menu */}
       {open && (
-        <div className="sm:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-1">
+        <div className="sm:hidden border-t border-red-hot bg-black-deep px-4 py-3 flex flex-col gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              className="block px-3 py-2 text-sm font-medium text-white-muted hover:text-orange-accent transition-colors"
             >
               {link.label}
             </Link>
@@ -86,7 +86,7 @@ export default function NavBar() {
           <Link
             href="/generate"
             onClick={() => setOpen(false)}
-            className="mt-1 block px-3 py-2 rounded-md text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
+            className="mt-1 block px-3 py-2 text-sm font-semibold text-red-hot hover:text-orange-accent transition-colors"
           >
             Try free
           </Link>

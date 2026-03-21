@@ -16,11 +16,11 @@ export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-gray-100 bg-white py-10 px-4 sm:px-6 lg:px-8">
+    <footer className="border-t-2 border-red-hot bg-black-deep py-10 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           {/* Branding */}
-          <span className="text-lg font-bold tracking-tight text-gray-900">AIDEN</span>
+          <span className="text-lg font-bold tracking-tight text-red-hot uppercase">AIDEN</span>
 
           {/* Nav links */}
           <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
@@ -28,7 +28,7 @@ export default function Footer() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-sm text-white-muted hover:text-orange-accent transition-colors"
               >
                 {link.label}
               </Link>
@@ -41,7 +41,7 @@ export default function Footer() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-sm text-white-dim hover:text-white-muted transition-colors"
               >
                 {link.label}
               </Link>
@@ -50,7 +50,7 @@ export default function Footer() {
         </div>
 
         {/* Copyright */}
-        <p className="mt-6 text-center text-xs text-gray-400">
+        <p className="mt-6 text-center text-xs text-white-dim">
           &copy; {year} AIDEN Brief Intelligence. All rights reserved.
         </p>
       </div>
