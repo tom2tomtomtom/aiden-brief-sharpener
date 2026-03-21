@@ -552,6 +552,145 @@ function RewrittenBriefSection({ strategicAnalysis, extractedBrief, isPro }: { s
   )
 }
 
+function buildFullMarkdown(data: BriefAnalysisData): string {
+  const { score, extractedBrief, strategicAnalysis, gaps } = data
+  const sections: string[] = []
+
+  // Score
+  const { label } = getScoreColor(score)
+  sections.push(`# Brief Analysis\n\n**Score:** ${score}/100 — ${label}`)
+
+  // Extracted Brief
+  const briefFields = Object.entries(extractedBrief).filter(([, v]) => {
+    if (v === null || v === undefined || v === '') return false
+    if (Array.isArray(v) && v.length === 0) return false
+    return true
+  })
+  if (briefFields.length > 0) {
+    const lines = briefFields.map(([key, value]) => {
+      const label = BRIEF_FIELD_LABELS[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      const displayValue = Array.isArray(value) ? value.join(', ') : typeof value === 'object' ? JSON.stringify(value) : String(value)
+      return `**${label}:** ${displayValue}`
+    })
+    sections.push(`## Extracted Brief\n\n${lines.join('\n')}`)
+  }
+
+  // Gap Analysis
+  if (gaps.length === 0) {
+    sections.push(`## Gap Analysis\n\nNo gaps found. Your brief covers all key areas.`)
+  } else {
+    const gapLines = gaps.map(g => `- **${SEVERITY_LABEL[getGapSeverity(g)]}:** ${g}`)
+    sections.push(`## Gap Analysis\n\n${gapLines.join('\n')}`)
+  }
+
+  // Strategic Tensions / Analysis
+  const tensionFields = ['tensions', 'strategic_tensions', 'cultural_tensions', 'audience_tensions', 'key_tensions']
+  let tensions: unknown[] = []
+  for (const field of tensionFields) {
+    if (Array.isArray(strategicAnalysis[field]) && (strategicAnalysis[field] as unknown[]).length > 0) {
+      tensions = strategicAnalysis[field] as unknown[]
+      break
+    }
+  }
+  if (tensions.length === 0) {
+    for (const [, value] of Object.entries(strategicAnalysis)) {
+      if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+        tensions = value
+        break
+      }
+    }
+  }
+
+  if (tensions.length > 0) {
+    const tensionLines = tensions.map((tension, i) => {
+      if (typeof tension === 'string') return `- ${tension}`
+      if (typeof tension === 'object' && tension !== null) {
+        const t = tension as Record<string, unknown>
+        const title = String(t.title ?? t.name ?? t.tension ?? `Tension ${i + 1}`)
+        const description = String(t.description ?? t.insight ?? t.explanation ?? t.detail ?? '')
+        return description ? `- **${title}:** ${description}` : `- ${title}`
+      }
+      return ''
+    }).filter(Boolean)
+    sections.push(`## Strategic Tensions\n\n${tensionLines.join('\n')}`)
+  } else {
+    const insights = Object.entries(strategicAnalysis).filter(([, v]) => typeof v === 'string' && v.length > 0)
+    if (insights.length > 0) {
+      const insightLines = insights.map(([key, value]) => {
+        const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        return `**${label}:** ${String(value)}`
+      })
+      sections.push(`## Strategic Analysis\n\n${insightLines.join('\n')}`)
+    }
+  }
+
+  // Rewritten Brief
+  const rewriteFields = ['rewritten_brief', 'sharpened_brief', 'improved_brief', 'refined_brief', 'brief_rewrite', 'recommended_brief']
+  let rewrittenBrief: string | null = null
+  for (const field of rewriteFields) {
+    if (typeof strategicAnalysis[field] === 'string' && (strategicAnalysis[field] as string).length > 0) {
+      rewrittenBrief = strategicAnalysis[field] as string
+      break
+    }
+  }
+  if (!rewrittenBrief) {
+    const parts: string[] = []
+    const objective = extractedBrief.objective
+    const audience = extractedBrief.target_audience
+    const deliverables = extractedBrief.deliverables
+    const tone = extractedBrief.tone
+    const kpis = extractedBrief.kpis
+    if (objective) parts.push(`**Objective:** ${objective}`)
+    if (audience) parts.push(`**Target Audience:** ${Array.isArray(audience) ? audience.join(', ') : audience}`)
+    if (deliverables) parts.push(`**Deliverables:** ${Array.isArray(deliverables) ? deliverables.join(', ') : deliverables}`)
+    if (tone) parts.push(`**Tone:** ${tone}`)
+    if (kpis) parts.push(`**Success Metrics:** ${Array.isArray(kpis) ? kpis.join(', ') : kpis}`)
+    if (parts.length > 0) rewrittenBrief = parts.join('\n')
+  }
+  if (rewrittenBrief) {
+    sections.push(`## Sharpened Brief\n\n${rewrittenBrief}`)
+  }
+
+  return sections.join('\n\n---\n\n')
+}
+
+function CopyAllButton({ data }: { data: BriefAnalysisData }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(buildFullMarkdown(data))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard not available
+    }
+  }, [data])
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+    >
+      {copied ? (
+        <>
+          <svg className="h-3.5 w-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-green-600">Copied!</span>
+        </>
+      ) : (
+        <>
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Copy full analysis
+        </>
+      )}
+    </button>
+  )
+}
+
 function DownloadPDFButton({ data, isPaidUser }: { data: BriefAnalysisData; isPaidUser?: boolean }) {
   const handleClick = useCallback(() => {
     const form = document.createElement('form')
@@ -684,6 +823,7 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser }: B
           <ScoreCircle score={score} />
         </div>
         <div className="flex flex-col items-end gap-2 pb-2">
+          <CopyAllButton data={data} />
           <DownloadPDFButton data={data} isPaidUser={isPaidUser} />
           {previewUrl && <ShareResultButton url={previewUrl} />}
         </div>
