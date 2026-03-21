@@ -46,7 +46,9 @@ function GeneratePageInner() {
   const [isFirstAnalysis, setIsFirstAnalysis] = useState(false)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
+  const [mobileResultsCollapsed, setMobileResultsCollapsed] = useState(false)
   const emailModalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formPanelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isFirstAnalysis) {
@@ -71,6 +73,23 @@ function GeneratePageInner() {
   function dismissWelcomeBanner() {
     setShowWelcomeBanner(false)
   }
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      if (status !== 'done' || !analysisData) return
+      if (window.innerWidth < 1024) {
+        setMobileResultsCollapsed(true)
+      }
+      formPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const textarea = formPanelRef.current?.querySelector('textarea')
+      if (textarea) {
+        setTimeout(() => textarea.focus(), 100)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [status, analysisData])
 
   useEffect(() => {
     async function checkAuth() {
@@ -141,6 +160,7 @@ function GeneratePageInner() {
       const data = await response.json()
       setAnalysisData(data as BriefAnalysisData)
       setGenerationId(data.generationId ?? null)
+      setMobileResultsCollapsed(false)
       setStatus('done')
       setCompletedAt(new Date().toLocaleTimeString())
       setPlanInfo(prev => prev && prev.plan !== 'pro' ? { ...prev, used: prev.used + 1 } : prev)
@@ -288,7 +308,7 @@ function GeneratePageInner() {
       <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 lg:pb-8 lg:px-8">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
           {/* Left: Form */}
-          <div className="w-full lg:w-[420px] lg:flex-shrink-0">
+          <div ref={formPanelRef} className="w-full lg:w-[420px] lg:flex-shrink-0">
             <div className="border border-border-subtle bg-black-card p-6">
               <LandingPageForm
                 onGenerate={handleGenerate}
@@ -303,7 +323,15 @@ function GeneratePageInner() {
           <div className="min-w-0 flex-1">
             {status === 'loading' && <LoadingState />}
             {status === 'unauthenticated' && <AuthPrompt />}
-            {status === 'done' && analysisData && (
+            {status === 'done' && analysisData && mobileResultsCollapsed && (
+              <button
+                onClick={() => setMobileResultsCollapsed(false)}
+                className="w-full border border-border-subtle bg-black-card px-4 py-3 text-sm font-medium text-white-muted hover:text-white transition-colors lg:hidden"
+              >
+                Show analysis results ↓
+              </button>
+            )}
+            {status === 'done' && analysisData && !mobileResultsCollapsed && (
               <div>
                 <div className="mb-4 flex items-center justify-between border border-border-subtle bg-black-deep px-4 py-3 sticky top-0 z-10">
                   <div className="flex items-center gap-3">
