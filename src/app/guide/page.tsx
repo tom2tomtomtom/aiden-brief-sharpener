@@ -25,7 +25,7 @@ function InlineCTA() {
       <div>
         <p className="text-sm font-semibold text-indigo-900">Not sure if your brief is ready?</p>
         <p className="text-sm text-indigo-700 mt-0.5">
-          AIDEN checks your brief against 340+ creative criteria in seconds.
+          AIDEN checks your brief against 8 essential creative criteria in seconds.
         </p>
       </div>
       <Link
@@ -431,7 +431,7 @@ export default function GuidePage() {
           <section className="rounded-2xl bg-gray-900 text-white px-8 py-12 text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to sharpen your brief?</h2>
             <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
-              AIDEN analyses your brief against 340+ creative criteria — gaps in strategy,
+              AIDEN analyses your brief against 8 essential creative criteria — gaps in strategy,
               missing audience insight, weak propositions, and more — and sends back a smarter
               version in seconds.
             </p>

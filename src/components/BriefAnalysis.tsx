@@ -386,7 +386,7 @@ function PhantomCDLockedSection() {
             </svg>
           </div>
           <h3 className="mt-3 text-base font-semibold text-gray-900">Unlock Phantom Creative Director</h3>
-          <p className="mt-1 text-sm text-gray-600 max-w-xs">See how 340+ creative minds would attack this brief.</p>
+          <p className="mt-1 text-sm text-gray-600 max-w-xs">See how expert creative perspectives would attack this brief.</p>
           <Link
             href="/pricing"
             className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"

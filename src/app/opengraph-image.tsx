@@ -49,7 +49,7 @@ export default function Image() {
               maxWidth: '900px',
             }}
           >
-            Paste your brief. AIDEN interrogates it with 340+ creative phantoms. Get gaps identified and a sharper brief back in seconds.
+            Paste your brief. AIDEN interrogates it with AI-powered creative analysis. Get gaps identified and a sharper brief back in seconds.
           </div>
           <div
             style={{

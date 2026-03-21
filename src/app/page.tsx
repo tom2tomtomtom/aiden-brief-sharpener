@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import NavBar from '@/components/NavBar'
 import FAQAccordion from '@/components/FAQAccordion'
 import TryDemoSection from '@/components/TryDemoSection'
 import EmailCapture from '@/components/EmailCapture'
@@ -8,7 +9,7 @@ import type { StatsResponse } from '@/app/api/stats/route'
 
 export const metadata: Metadata = {
   title: 'AIDEN Brief Intelligence | AI-Powered Brief Analysis',
-  description: 'Paste your brief. AIDEN interrogates it with 340+ creative phantoms. Get gaps identified and a sharper brief back in seconds. Start free.',
+  description: 'Paste your brief. AIDEN interrogates it with AI-powered creative analysis. Get gaps identified and a sharper brief back in seconds. Start free.',
   alternates: {
     canonical: 'https://aiden.services',
   },
@@ -20,7 +21,7 @@ const jsonLd = {
   name: 'AIDEN Brief Intelligence',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
-  description: 'AI-powered brief analysis tool that interrogates creative briefs with 340+ creative phantoms to identify gaps and produce sharper briefs.',
+  description: 'AI-powered brief analysis tool that interrogates creative briefs across 8 essential creative criteria to identify gaps and produce sharper briefs.',
   url: 'https://aiden.services',
   offers: [
     {
@@ -74,7 +75,7 @@ const steps = [
   {
     number: '02',
     title: 'AIDEN interrogates it',
-    description: '340+ creative phantoms — strategists, planners, and creatives — stress-test every line. They find what you missed and why it matters.',
+    description: 'Expert creative perspectives — strategists, planners, and creatives — stress-test every line. They find what you missed and why it matters.',
   },
   {
     number: '03',
@@ -127,29 +128,7 @@ export default async function MarketingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* Nav */}
-      <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
-          <span className="text-lg font-bold tracking-tight text-gray-900">AIDEN</span>
-          <div className="flex items-center gap-4">
-            <Link href="/pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-              Pricing
-            </Link>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/generate"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-            >
-              Try free
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       {/* Live stats bar */}
       {stats.briefCount > 0 && (
@@ -176,7 +155,7 @@ export default async function MarketingPage() {
       <section className="bg-gradient-to-b from-indigo-50 to-white px-4 pt-20 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 mb-6">
-            340+ creative phantoms · Powered by Claude AI
+            AI-powered creative analysis · Powered by Claude AI
           </div>
           <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl leading-tight">
             Your brief is holding{' '}
@@ -211,7 +190,7 @@ export default async function MarketingPage() {
           <div className="flex flex-wrap items-center justify-center gap-3">
             {[
               { label: 'Powered by AIDEN Brain V2' },
-              { label: '340+ Creative Phantoms' },
+              { label: 'AI Creative Analysis' },
               { label: 'Built for agencies and brands' },
               { label: 'Built with Claude AI' },
             ].map(({ label }) => (

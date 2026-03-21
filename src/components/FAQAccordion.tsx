@@ -16,7 +16,7 @@ const faqs = [
   {
     question: 'What are phantoms?',
     answer:
-      'Phantoms are the 340+ expert perspectives AIDEN uses to interrogate your brief. They represent distinct strategic and creative viewpoints — the account planner who questions every audience assumption, the creative director who demands a single-minded proposition, the strategist who won\'t accept a vague objective. Each phantom stresses a different part of your brief, so nothing gets missed.',
+      'Phantoms are the expert strategic perspectives AIDEN uses to interrogate your brief. They represent distinct strategic and creative viewpoints — the account planner who questions every audience assumption, the creative director who demands a single-minded proposition, the strategist who won\'t accept a vague objective. Each phantom stresses a different part of your brief, so nothing gets missed.',
   },
   {
     question: 'Who is this for?',

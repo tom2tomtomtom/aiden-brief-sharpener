@@ -19,14 +19,14 @@ export const metadata: Metadata = {
     default: 'AIDEN Brief Intelligence | AI-Powered Brief Analysis',
     template: '%s | AIDEN',
   },
-  description: 'Paste your brief. AIDEN interrogates it with 340+ creative phantoms. Get gaps identified and a sharper brief back in seconds.',
+  description: 'Paste your brief. AIDEN interrogates it with AI-powered creative analysis. Get gaps identified and a sharper brief back in seconds.',
   metadataBase: new URL(siteUrl),
   openGraph: {
     type: 'website',
     url: siteUrl,
     siteName: 'AIDEN',
     title: 'AIDEN Brief Intelligence | AI-Powered Brief Analysis',
-    description: 'Paste your brief. AIDEN interrogates it with 340+ creative phantoms. Get gaps identified and a sharper brief back in seconds.',
+    description: 'Paste your brief. AIDEN interrogates it with AI-powered creative analysis. Get gaps identified and a sharper brief back in seconds.',
     images: [
       {
         url: '/opengraph-image',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'AIDEN Brief Intelligence | AI-Powered Brief Analysis',
-    description: 'Paste your brief. AIDEN interrogates it with 340+ creative phantoms. Get gaps identified and a sharper brief back in seconds.',
+    description: 'Paste your brief. AIDEN interrogates it with AI-powered creative analysis. Get gaps identified and a sharper brief back in seconds.',
     images: ['/opengraph-image'],
   },
 }
