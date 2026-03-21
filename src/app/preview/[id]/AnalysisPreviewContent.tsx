@@ -181,6 +181,14 @@ export default function AnalysisPreviewContent({ data, previewUrl }: AnalysisPre
           <p className="mt-3 text-xs text-indigo-500">3 free analyses per month · No credit card required</p>
         </div>
       </main>
+
+      {/* Powered by badge */}
+      <div className="border-t border-gray-200 bg-white py-4 text-center">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          <span>Powered by</span>
+          <span className="font-semibold tracking-tight text-gray-500">AIDEN</span>
+        </Link>
+      </div>
     </div>
   )
 }
