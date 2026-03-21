@@ -898,11 +898,19 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isF
           {previewUrl && <ShareResultButton url={previewUrl} />}
         </div>
       </div>
-      <ExtractedBriefCard extractedBrief={extractedBrief} />
-      <GapAnalysisSection gaps={gaps} strategicAnalysis={strategicAnalysis} />
-      <StrategicTensionsSection strategicAnalysis={strategicAnalysis} />
+      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 0ms both' }}>
+        <ExtractedBriefCard extractedBrief={extractedBrief} />
+      </div>
+      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 150ms both' }}>
+        <GapAnalysisSection gaps={gaps} strategicAnalysis={strategicAnalysis} />
+      </div>
+      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 300ms both' }}>
+        <StrategicTensionsSection strategicAnalysis={strategicAnalysis} />
+      </div>
       {!isPro && <PhantomCDLockedSection />}
-      <RewrittenBriefSection strategicAnalysis={strategicAnalysis} extractedBrief={extractedBrief} isPro={isPro} />
+      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 450ms both' }}>
+        <RewrittenBriefSection strategicAnalysis={strategicAnalysis} extractedBrief={extractedBrief} isPro={isPro} />
+      </div>
       {!isPaidUser && <UpgradeCtaCard />}
     </div>
   )
