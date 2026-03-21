@@ -135,18 +135,39 @@ function GeneratePageInner() {
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl flex items-center justify-between">
-          <div>
-            <Link href="/" className="text-xl font-bold tracking-tight text-gray-900 hover:text-indigo-600 transition-colors">
-              AIDEN Brief Intelligence
-            </Link>
-            <p className="mt-0.5 text-sm text-gray-500">
-              AI-powered brief intelligence.
-            </p>
+        <div className="mx-auto max-w-7xl">
+          {/* Breadcrumb */}
+          <nav aria-label="Breadcrumb" className="mb-2">
+            <ol className="flex items-center gap-1.5 text-xs text-gray-400">
+              <li>
+                <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
+              </li>
+              <li aria-hidden="true">›</li>
+              <li className="font-medium text-gray-600">Interrogate Brief</li>
+            </ol>
+          </nav>
+          {/* Logo + Nav */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Link href="/" className="text-xl font-bold tracking-tight text-gray-900 hover:text-indigo-600 transition-colors">
+                AIDEN Brief Intelligence
+              </Link>
+              <p className="mt-0.5 text-sm text-gray-500">
+                AI-powered brief intelligence.
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              {planInfo?.plan === 'free' && (
+                <span className="text-sm text-gray-500">
+                  <span className="font-semibold text-gray-900">{Math.max(0, 3 - planInfo.used)}</span>
+                  {' '}free {Math.max(0, 3 - planInfo.used) === 1 ? 'analysis' : 'analyses'} remaining
+                </span>
+              )}
+              <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                Pricing
+              </Link>
+            </div>
           </div>
-          <Link href="/pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-            Pricing
-          </Link>
         </div>
       </header>
 
