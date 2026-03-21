@@ -265,6 +265,12 @@ const SEVERITY_LABEL: Record<GapSeverity, string> = {
   info: 'Consider adding',
 }
 
+const SEVERITY_BORDER: Record<GapSeverity, string> = {
+  critical: 'border-l-4 border-l-red-500',
+  warning: 'border-l-4 border-l-amber-500',
+  info: 'border-l-4 border-l-blue-400',
+}
+
 const GAP_SUGGESTIONS: Array<{ keywords: string[]; suggestion: string }> = [
   {
     keywords: ['objective', 'goal', 'aim', 'purpose'],
@@ -334,7 +340,7 @@ function GapCard({ gap, strategicAnalysis }: { gap: string; strategicAnalysis: R
   const suggestion = generateGapSuggestion(gap, strategicAnalysis)
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div className={`rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden ${SEVERITY_BORDER[severity]}`}>
       <div className="flex items-start gap-3 p-4">
         <GapIcon severity={severity} />
         <div className="flex-1 min-w-0">
