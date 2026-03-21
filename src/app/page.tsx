@@ -475,20 +475,6 @@ export default async function MarketingPage() {
       {/* Email capture */}
       <EmailCapture />
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <span className="font-semibold text-gray-900">AIDEN</span>
-          <div className="flex items-center gap-6">
-            <Link href="/pricing" className="hover:text-gray-600 transition-colors">Pricing</Link>
-            <Link href="/login" className="hover:text-gray-600 transition-colors">Log in</Link>
-            <Link href="/generate" className="hover:text-gray-600 transition-colors">Interrogate</Link>
-            <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms</Link>
-            <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy</Link>
-          </div>
-          <span>Built with Claude AI by Anthropic</span>
-        </div>
-      </footer>
     </main>
   )
 }
