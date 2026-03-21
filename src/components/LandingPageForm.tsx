@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { GenerateFormData } from '@/app/generate/GenerateClient'
+import { useToast } from '@/components/Toast'
 
 const EXAMPLE_BRIEFS = [
   {
@@ -181,6 +182,7 @@ const ACCEPTED_MIME = [
 ]
 
 export default function LandingPageForm({ onGenerate, isLoading, error, onFormChange }: LandingPageFormProps) {
+  const { showToast } = useToast()
   const [formData, setFormData] = useState<FormFields>(initialFormData)
   const [errors, setErrors] = useState<FormErrors>({})
   const [uploadState, setUploadState] = useState<'idle' | 'parsing' | 'done' | 'error'>('idle')
@@ -226,9 +228,12 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
       if (data.truncated) {
         setUploadError('Brief was truncated to 10,000 characters.')
       }
+      showToast(`Brief loaded from ${file.name}`)
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to parse file'
       setUploadState('error')
-      setUploadError(err instanceof Error ? err.message : 'Failed to parse file')
+      setUploadError(message)
+      showToast(message, 'error')
     }
   }
 
