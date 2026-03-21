@@ -44,6 +44,7 @@ function GeneratePageInner() {
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
   const [isFirstAnalysis, setIsFirstAnalysis] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   useEffect(() => {
     const hasVisited = localStorage.getItem('aiden_has_visited')
@@ -324,6 +325,35 @@ function GeneratePageInner() {
             )}
             {status === 'done' && !analysisData && <EmptyPreview />}
           </div>
+        </div>
+      </div>
+      {/* Keyboard shortcuts help button */}
+      <div className="fixed bottom-6 right-6 z-30 hidden lg:block">
+        <div className="relative">
+          {showShortcuts && (
+            <div className="absolute bottom-10 right-0 w-52 rounded-xl border border-gray-200 bg-white p-3 shadow-lg">
+              <p className="mb-2 text-xs font-semibold text-gray-700">Keyboard shortcuts</p>
+              <ul className="space-y-1.5">
+                <li className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-gray-500">Submit brief</span>
+                  <kbd className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-mono text-gray-700 border border-gray-300">⌘ Enter</kbd>
+                </li>
+                <li className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-gray-500">Close results</span>
+                  <kbd className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-mono text-gray-700 border border-gray-300">Esc</kbd>
+                </li>
+              </ul>
+            </div>
+          )}
+          <button
+            onClick={() => setShowShortcuts(v => !v)}
+            onMouseEnter={() => setShowShortcuts(true)}
+            onMouseLeave={() => setShowShortcuts(false)}
+            aria-label="Keyboard shortcuts"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-sm font-semibold text-gray-500 shadow-sm hover:bg-gray-200 hover:text-gray-700 transition-colors"
+          >
+            ?
+          </button>
         </div>
       </div>
       {/* Sticky mobile interrogate button */}
