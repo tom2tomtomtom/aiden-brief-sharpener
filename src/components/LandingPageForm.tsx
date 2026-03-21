@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { GenerateFormData } from '@/app/generate/GenerateClient'
 
 const EXAMPLE_BRIEFS = [
@@ -131,9 +131,23 @@ const initialFormData: FormFields = {
   briefType: '',
 }
 
+const ACCEPTED_TYPES = '.pdf,.docx,.doc,.txt,.md'
+const ACCEPTED_MIME = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'text/plain',
+  'text/markdown',
+]
+
 export default function LandingPageForm({ onGenerate, isLoading, error, onFormChange }: LandingPageFormProps) {
   const [formData, setFormData] = useState<FormFields>(initialFormData)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [uploadState, setUploadState] = useState<'idle' | 'parsing' | 'done' | 'error'>('idle')
+  const [uploadFileName, setUploadFileName] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function validate(): boolean {
     const newErrors: FormErrors = {}
@@ -149,6 +163,47 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
   function handleBriefChange(val: string) {
     setFormData((p) => ({ ...p, briefText: val }))
     onFormChange?.(val.trim().length >= 100)
+  }
+
+  async function handleFileUpload(file: File) {
+    setUploadState('parsing')
+    setUploadError(null)
+    setUploadFileName(file.name)
+
+    try {
+      const body = new FormData()
+      body.append('file', file)
+
+      const res = await fetch('/api/parse-brief', { method: 'POST', body })
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to parse file')
+      }
+
+      handleBriefChange(data.text)
+      setUploadState('done')
+      if (data.truncated) {
+        setUploadError('Brief was truncated to 10,000 characters.')
+      }
+    } catch (err) {
+      setUploadState('error')
+      setUploadError(err instanceof Error ? err.message : 'Failed to parse file')
+    }
+  }
+
+  function handleFileDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleFileUpload(file)
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) handleFileUpload(file)
+    // Reset so same file can be re-selected
+    e.target.value = ''
   }
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -194,8 +249,80 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
       {/* Brief textarea */}
       <div>
         <label htmlFor="briefText" className="block text-sm font-medium text-gray-700">
-          Paste your brief here <span className="text-red-500">*</span>
+          Upload or paste your brief <span className="text-red-500">*</span>
         </label>
+
+        {/* File upload dropzone */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleFileDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`mt-2 cursor-pointer border-2 border-dashed p-4 text-center transition ${
+            isDragOver
+              ? 'border-indigo-400 bg-indigo-50'
+              : uploadState === 'done'
+              ? 'border-green-300 bg-green-50'
+              : uploadState === 'error'
+              ? 'border-red-300 bg-red-50'
+              : 'border-gray-300 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/50'
+          } rounded-lg`}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_TYPES}
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          {uploadState === 'parsing' ? (
+            <div className="py-2 space-y-2">
+              <p className="text-sm text-indigo-600">Parsing {uploadFileName}...</p>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-indigo-100">
+                <div className="h-full w-full origin-left animate-[progress_1.5s_ease-in-out_infinite] rounded-full bg-indigo-500" />
+              </div>
+            </div>
+          ) : uploadState === 'done' ? (
+            <div className="py-1">
+              <p className="text-sm text-green-700">
+                <span className="font-medium">{uploadFileName}</span> loaded
+              </p>
+              {uploadError && <p className="text-xs text-amber-600 mt-1">{uploadError}</p>}
+              <div className="mt-2 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setUploadState('idle')
+                    setUploadFileName(null)
+                    setUploadError(null)
+                    handleBriefChange('')
+                  }}
+                  className="rounded-md border border-red-200 bg-white px-3 py-1 text-xs font-medium text-red-600 transition hover:border-red-300 hover:bg-red-50"
+                >
+                  Clear file
+                </button>
+                <span className="text-xs text-gray-400">or click to upload a different file</span>
+              </div>
+            </div>
+          ) : (
+            <div className="py-1">
+              <p className="text-sm text-gray-600">
+                <span className="font-medium text-indigo-600">Upload a file</span> or drag and drop
+              </p>
+              <p className="text-xs text-gray-400 mt-1">PDF, Word (.docx), or text files up to 10MB</p>
+              {uploadState === 'error' && uploadError && (
+                <p className="text-xs text-red-500 mt-1">{uploadError}</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="my-3 flex items-center gap-3">
+          <div className="h-px flex-1 bg-gray-200" />
+          <span className="text-xs text-gray-400">or</span>
+          <div className="h-px flex-1 bg-gray-200" />
+        </div>
 
         {/* Example brief chips */}
         <div className="mt-2 mb-2">
