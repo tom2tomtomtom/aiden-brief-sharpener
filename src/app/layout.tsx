@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   },
   description: 'Paste your brief. AIDEN interrogates it with AI-powered creative analysis. Get gaps identified and a sharper brief back in seconds.',
   metadataBase: new URL(siteUrl),
+  manifest: '/manifest.json',
+  icons: {
+    apple: '/icon',
+  },
   openGraph: {
     type: 'website',
     url: siteUrl,

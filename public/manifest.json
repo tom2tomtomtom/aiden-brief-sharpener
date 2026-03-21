@@ -1,0 +1,17 @@
+{
+  "name": "AIDEN Brief Intelligence",
+  "short_name": "AIDEN",
+  "description": "AI-powered brief analysis and creative intelligence.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ff2e2e",
+  "background_color": "#050505",
+  "icons": [
+    {
+      "src": "/icon",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
