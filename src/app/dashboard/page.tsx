@@ -65,16 +65,16 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-black-ink">
+      <header className="border-b border-border-subtle bg-black-ink px-4 py-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-xl font-bold tracking-tight text-white uppercase">
             AIDEN Dashboard
           </h1>
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm text-white-muted hover:text-white hover:border-white transition-colors"
             >
               Sign out
             </button>
@@ -85,13 +85,13 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-8">
         {/* Limit reached banner */}
         {isLimitReached && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 flex items-center justify-between gap-4">
-            <p className="text-sm font-medium text-red-800">
+          <div className="rounded-xl border border-red-hot/30 bg-red-hot/10 px-6 py-4 flex items-center justify-between gap-4">
+            <p className="text-sm font-medium text-white">
               You have reached your free limit this month. Upgrade to keep analysing.
             </p>
             <a
               href="/pricing"
-              className="shrink-0 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition"
+              className="shrink-0 rounded-lg bg-red-hot px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
             >
               Upgrade now
             </a>
@@ -99,48 +99,48 @@ export default async function DashboardPage() {
         )}
 
         {/* User card */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-border-subtle bg-black-card p-8">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
-              <span className="text-lg font-semibold text-indigo-700">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-hot/20 border border-red-hot/30">
+              <span className="text-lg font-semibold text-red-hot">
                 {user.email?.[0]?.toUpperCase() ?? '?'}
               </span>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-gray-900">{user.email}</p>
-                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                <p className="text-sm font-medium text-white">{user.email}</p>
+                <span className="rounded-full bg-red-hot/20 border border-red-hot/30 px-2 py-0.5 text-xs font-medium text-red-hot">
                   {planLabel}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">Authenticated via magic link</p>
+              <p className="text-xs text-white-dim">Authenticated via magic link</p>
             </div>
           </div>
 
           {/* Usage counter */}
-          <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50 px-5 py-4">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <div className="mt-6 rounded-xl border border-border-subtle bg-black-ink px-5 py-4">
+            <p className="text-xs font-medium text-white-dim uppercase tracking-wide">
               Analyses this month
             </p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">
+            <p className="mt-1 text-2xl font-bold text-white">
               {planLimits.limit === null
                 ? 'Unlimited'
                 : `${planLimits.used} of ${planLimits.limit}`}
             </p>
             {planLimits.limit !== null && (
-              <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200">
+              <div className="mt-2 h-1.5 w-full rounded-full bg-border-subtle">
                 <div
                   className={`h-1.5 rounded-full transition-all ${
-                    isLimitReached ? 'bg-red-500' : 'bg-indigo-500'
+                    isLimitReached ? 'bg-red-hot' : 'bg-orange-accent'
                   }`}
                   style={{ width: `${Math.min((planLimits.used / planLimits.limit) * 100, 100)}%` }}
                 />
               </div>
             )}
             {isNearingLimit && (
-              <p className="mt-3 text-sm text-amber-700">
+              <p className="mt-3 text-sm text-white-muted">
                 Running low?{' '}
-                <a href="/pricing" className="font-medium underline hover:text-amber-800">
+                <a href="/pricing" className="font-medium text-orange-accent underline hover:opacity-80">
                   Upgrade for unlimited analyses
                 </a>
               </p>
@@ -157,27 +157,27 @@ export default async function DashboardPage() {
         </div>
 
         {/* Brief analysis history */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-border-subtle bg-black-card p-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">My Brief Analyses</h2>
+            <h2 className="text-base font-semibold text-white uppercase">My Brief Analyses</h2>
             <a
               href="/generate"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+              className="rounded-lg bg-red-hot px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
             >
               Analyse new brief
             </a>
           </div>
 
           {!generations || generations.length === 0 ? (
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-white-muted">
               No analyses yet.{' '}
-              <a href="/generate" className="text-indigo-600 hover:underline">
+              <a href="/generate" className="text-orange-accent hover:underline">
                 Analyse your first brief
               </a>
               .
             </p>
           ) : (
-            <ul className="mt-4 divide-y divide-gray-100">
+            <ul className="mt-4 divide-y divide-border-subtle">
               {(generations as GenerationRecord[]).map((gen) => {
                 const briefSnippet = (
                   gen.input_data?.briefText ??
@@ -191,20 +191,20 @@ export default async function DashboardPage() {
                 return (
                   <li key={gen.id} className="flex items-start justify-between gap-4 py-4">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                      <p className="text-sm font-medium text-white line-clamp-2">
                         {briefSnippet}
                         {(gen.input_data?.briefText ?? gen.input_data?.productDescription ?? '').length > 80 ? '…' : ''}
                       </p>
-                      <div className="mt-1.5 flex items-center gap-3 text-xs text-gray-500">
+                      <div className="mt-1.5 flex items-center gap-3 text-xs text-white-dim">
                         {score !== null && (
                           <span className="flex items-center gap-1">
-                            <span className="font-medium text-indigo-600">Score:</span>
+                            <span className="font-medium text-orange-accent">Score:</span>
                             {score}
                           </span>
                         )}
                         {gapsCount !== null && (
                           <span className="flex items-center gap-1">
-                            <span className="font-medium text-amber-600">Gaps:</span>
+                            <span className="font-medium text-amber-500">Gaps:</span>
                             {gapsCount} found
                           </span>
                         )}
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
                     </div>
                     <a
                       href={`/preview/${gen.id}`}
-                      className="shrink-0 rounded-lg border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition"
+                      className="shrink-0 rounded-lg border border-border-subtle px-3 py-1.5 text-xs font-medium text-white-muted hover:text-white hover:border-white transition-colors"
                     >
                       View
                     </a>
@@ -245,12 +245,12 @@ function DashboardCard({
   return (
     <a
       href={href}
-      className="group rounded-xl border border-gray-200 p-5 transition hover:border-indigo-300 hover:shadow-sm"
+      className="group rounded-xl border border-border-subtle p-5 transition hover:border-red-hot/50 hover:bg-red-hot/5"
     >
-      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">
+      <h3 className="text-sm font-semibold text-white uppercase group-hover:text-orange-accent">
         {title}
       </h3>
-      <p className="mt-1 text-xs text-gray-500">{description}</p>
+      <p className="mt-1 text-xs text-white-dim">{description}</p>
     </a>
   )
 }

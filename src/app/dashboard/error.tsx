@@ -13,11 +13,11 @@ export default function DashboardError({ error, reset }: ErrorPageProps) {
   }, [error])
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50 px-8 py-16 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
+    <main className="flex min-h-screen items-center justify-center bg-black-ink px-4">
+      <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-red-hot/30 bg-black-card px-8 py-16 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-hot/20 border border-red-hot/30">
           <svg
-            className="h-7 w-7 text-red-500"
+            className="h-7 w-7 text-red-hot"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -31,18 +31,18 @@ export default function DashboardError({ error, reset }: ErrorPageProps) {
             />
           </svg>
         </div>
-        <h2 className="mt-4 text-lg font-semibold text-gray-900">Something went wrong</h2>
-        <p className="mt-2 max-w-sm text-sm text-gray-600">
+        <h2 className="mt-4 text-lg font-semibold text-white uppercase">Something went wrong</h2>
+        <p className="mt-2 max-w-sm text-sm text-white-muted">
           We could not load your dashboard. Please try again, and if the problem persists contact support.
         </p>
         {error.message && (
-          <p className="mt-2 max-w-sm rounded bg-red-100 px-3 py-1.5 font-mono text-xs text-red-700">
+          <p className="mt-2 max-w-sm rounded bg-red-hot/10 border border-red-hot/20 px-3 py-1.5 font-mono text-xs text-red-hot">
             {error.message}
           </p>
         )}
         <button
           onClick={reset}
-          className="mt-6 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+          className="mt-6 rounded-xl bg-red-hot px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           Try again
         </button>
