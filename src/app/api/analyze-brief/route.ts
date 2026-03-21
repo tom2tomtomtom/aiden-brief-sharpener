@@ -78,31 +78,30 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Auth check
+  // Auth check (optional - anonymous users can analyze, just no save/tracking)
   const supabase = createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Usage limit check
   const adminSupabase = createAdminClient()
-  const { allowed, planLimits } = await canGenerate(adminSupabase, user.id)
 
-  if (!allowed) {
-    return NextResponse.json(
-      {
-        error: 'Generation limit reached',
-        plan: planLimits.plan,
-        used: planLimits.used,
-        limit: planLimits.limit,
-        upgradeUrl: '/pricing',
-      },
-      { status: 429 }
-    )
+  // Usage limit check (only for authenticated users)
+  if (user) {
+    const { allowed, planLimits } = await canGenerate(adminSupabase, user.id)
+
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: 'Generation limit reached',
+          plan: planLimits.plan,
+          used: planLimits.used,
+          limit: planLimits.limit,
+          upgradeUrl: '/pricing',
+        },
+        { status: 429 }
+      )
+    }
   }
 
   let body: AnalyzeBriefRequest
@@ -136,20 +135,23 @@ export async function POST(request: NextRequest) {
     const score = calculateBriefScore(briefText, extractedBrief)
     const gaps = identifyGaps(extractedBrief)
 
-    // Track usage after successful analysis
-    const plan = await getUserPlan(adminSupabase, user.id)
-    await incrementUsage(adminSupabase, user.id, plan)
+    // Track usage and save for authenticated users
+    let generation: { id: string } | null = null
+    if (user) {
+      const plan = await getUserPlan(adminSupabase, user.id)
+      await incrementUsage(adminSupabase, user.id, plan)
 
-    // Save analysis results to generations table
-    const { data: generation } = await adminSupabase
-      .from('generations')
-      .insert({
-        user_id: user.id,
-        input_data: { briefText, brandName, industry, briefType },
-        output_copy: { extractedBrief, strategicAnalysis, gaps, score },
-      })
-      .select('id')
-      .single()
+      const { data } = await adminSupabase
+        .from('generations')
+        .insert({
+          user_id: user.id,
+          input_data: { briefText, brandName, industry, briefType },
+          output_copy: { extractedBrief, strategicAnalysis, gaps, score },
+        })
+        .select('id')
+        .single()
+      generation = data
+    }
 
     return NextResponse.json({
       extractedBrief,

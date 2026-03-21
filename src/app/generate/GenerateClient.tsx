@@ -129,10 +129,6 @@ function GeneratePageInner() {
   }, [])
 
   async function handleGenerate(formData: GenerateFormData) {
-    if (!isAuthenticated) {
-      setStatus('unauthenticated')
-      return
-    }
     setStatus('loading')
     setApiError(null)
     setLastFormData(formData)
