@@ -42,6 +42,7 @@ function GeneratePageInner() {
   const [lastFormData, setLastFormData] = useState<GenerateFormData | null>(null)
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
+  const [isFirstAnalysis, setIsFirstAnalysis] = useState(false)
 
   useEffect(() => {
     const hasVisited = localStorage.getItem('aiden_has_visited')
@@ -124,6 +125,10 @@ function GeneratePageInner() {
       setStatus('done')
       setPlanInfo(prev => prev && prev.plan !== 'pro' ? { ...prev, used: prev.used + 1 } : prev)
       showToast('Brief analysis complete!')
+      if (!localStorage.getItem('aiden_first_analysis_done')) {
+        localStorage.setItem('aiden_first_analysis_done', 'true')
+        setIsFirstAnalysis(true)
+      }
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       setStatus('error')
@@ -258,6 +263,7 @@ function GeneratePageInner() {
                   previewUrl={generationId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/preview/${generationId}` : undefined}
                   isPro={planInfo?.plan === 'pro'}
                   isPaidUser={planInfo?.plan !== 'free' && planInfo?.plan !== undefined}
+                  isFirstAnalysis={isFirstAnalysis}
                 />
               </div>
             )}

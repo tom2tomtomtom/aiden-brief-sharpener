@@ -15,6 +15,7 @@ interface BriefAnalysisProps {
   previewUrl?: string
   isPro?: boolean
   isPaidUser?: boolean
+  isFirstAnalysis?: boolean
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -61,7 +62,18 @@ function getScoreColor(score: number): { text: string; stroke: string; bg: strin
   return { text: 'text-red-600', stroke: '#dc2626', bg: 'bg-red-50', label: 'Incomplete brief' }
 }
 
-function ScoreCircle({ score }: { score: number }) {
+const CONFETTI_DOTS = [
+  { dx: '0px', dy: '-80px', color: '#6366f1', delay: '0ms' },
+  { dx: '57px', dy: '-57px', color: '#f59e0b', delay: '60ms' },
+  { dx: '80px', dy: '0px', color: '#10b981', delay: '120ms' },
+  { dx: '57px', dy: '57px', color: '#6366f1', delay: '180ms' },
+  { dx: '0px', dy: '80px', color: '#f59e0b', delay: '240ms' },
+  { dx: '-57px', dy: '57px', color: '#10b981', delay: '300ms' },
+  { dx: '-80px', dy: '0px', color: '#6366f1', delay: '360ms' },
+  { dx: '-57px', dy: '-57px', color: '#f59e0b', delay: '420ms' },
+]
+
+function ScoreCircle({ score, showCelebration }: { score: number; showCelebration?: boolean }) {
   const radius = 52
   const circumference = 2 * Math.PI * radius
 
@@ -110,6 +122,32 @@ function ScoreCircle({ score }: { score: number }) {
           <span className={`text-4xl font-bold ${text}`}>{displayScore}</span>
           <span className="text-xs text-gray-500 font-medium">/100</span>
         </div>
+        {showCelebration && (
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            {/* Expanding rings */}
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '3px solid #6366f1', animation: 'aidenCelebRing 0.8s ease-out 0.2s forwards', opacity: 0 }} />
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid #f59e0b', animation: 'aidenCelebRing 0.8s ease-out 0.5s forwards', opacity: 0 }} />
+            {/* Confetti dots */}
+            {CONFETTI_DOTS.map(({ dx, dy, color, delay }, i) => (
+              <span
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: color,
+                  ['--dx' as string]: dx,
+                  ['--dy' as string]: dy,
+                  animation: `aidenCelebDot 0.8s ease-out ${delay} forwards`,
+                  opacity: 0,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
       <p className={`mt-3 text-base font-semibold ${text}`}>{label}</p>
       <p className="mt-1 text-sm text-gray-500">Brief quality score</p>
@@ -813,14 +851,14 @@ function UpgradeCtaCard() {
   )
 }
 
-export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser }: BriefAnalysisProps) {
+export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isFirstAnalysis }: BriefAnalysisProps) {
   const { score, extractedBrief, strategicAnalysis, gaps } = data
 
   return (
     <div className="space-y-8">
       <div className="flex items-end justify-between gap-4">
         <div className="flex-1">
-          <ScoreCircle score={score} />
+          <ScoreCircle score={score} showCelebration={isFirstAnalysis} />
         </div>
         <div className="flex flex-col items-end gap-2 pb-2">
           <CopyAllButton data={data} />
