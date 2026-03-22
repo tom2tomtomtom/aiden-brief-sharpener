@@ -180,8 +180,12 @@ const BRIEF_FIELD_LABELS: Record<string, string> = {
   aiden_analysis: 'AIDEN Analysis',
 }
 
+// Fields that are AIDEN's own output, not extracted from the user's brief
+const AIDEN_META_FIELDS = new Set(['aiden_analysis', 'aiden_brief_version', 'confidence', 'rewritten_brief', 'sharpened_brief', 'improved_brief', 'refined_brief', 'brief_rewrite', 'recommended_brief'])
+
 function ExtractedBriefCard({ extractedBrief }: { extractedBrief: Record<string, unknown> }) {
-  const fields = Object.entries(extractedBrief).filter(([, v]) => {
+  const fields = Object.entries(extractedBrief).filter(([key, v]) => {
+    if (AIDEN_META_FIELDS.has(key)) return false
     if (v === null || v === undefined || v === '') return false
     if (Array.isArray(v) && v.length === 0) return false
     return true
@@ -721,8 +725,9 @@ function buildFullMarkdown(data: BriefAnalysisData): string {
   const { label } = getScoreColor(score)
   sections.push(`# Brief Analysis\n\n**Score:** ${score}/100 — ${label}`)
 
-  // Extracted Brief
-  const briefFields = Object.entries(extractedBrief).filter(([, v]) => {
+  // Extracted Brief (exclude AIDEN meta fields)
+  const briefFields = Object.entries(extractedBrief).filter(([key, v]) => {
+    if (AIDEN_META_FIELDS.has(key)) return false
     if (v === null || v === undefined || v === '') return false
     if (Array.isArray(v) && v.length === 0) return false
     return true
