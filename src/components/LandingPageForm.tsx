@@ -313,7 +313,7 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
 
       setUploadState('done')
       if (data.truncated) {
-        setUploadError('Brief was truncated to 10,000 characters.')
+        setUploadError('Brief was truncated to 50,000 characters.')
       }
       showToast(`Brief loaded from ${file.name}`)
     } catch (err) {
@@ -500,7 +500,7 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
           rows={10}
           value={formData.briefText}
           onChange={(e) => handleBriefChange(e.target.value)}
-          maxLength={10000}
+          maxLength={50000}
           placeholder={formData.industry ? (INDUSTRY_PLACEHOLDERS[formData.industry] ?? DEFAULT_PLACEHOLDER) : DEFAULT_PLACEHOLDER}
           aria-describedby={errors.briefText ? 'briefText-error' : undefined}
           aria-invalid={!!errors.briefText}
@@ -526,12 +526,12 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
             })()}
             {(() => {
               const charCount = formData.briefText.length
-              const pct = charCount / 10000
+              const pct = charCount / 50000
               const radius = 8
               const circumference = 2 * Math.PI * radius
               const dashOffset = circumference * (1 - pct)
-              const ringColor = charCount >= 9500 ? '#ef4444' : charCount >= 8000 ? '#f59e0b' : '#6366f1'
-              const textColor = charCount >= 9500 ? 'text-red-hot' : charCount >= 8000 ? 'text-amber-500' : 'text-white-dim'
+              const ringColor = charCount >= 47500 ? '#ef4444' : charCount >= 40000 ? '#f59e0b' : '#6366f1'
+              const textColor = charCount >= 47500 ? 'text-red-hot' : charCount >= 40000 ? 'text-amber-500' : 'text-white-dim'
               return (
                 <span className={`flex items-center gap-1 ${textColor}`}>
                   <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
@@ -547,7 +547,7 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
                       transform="rotate(-90 10 10)"
                     />
                   </svg>
-                  {charCount}/10000
+                  {charCount}/50000
                 </span>
               )
             })()}

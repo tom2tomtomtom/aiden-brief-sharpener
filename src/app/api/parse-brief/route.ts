@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not extract text from file. The file may be empty or image-based.' }, { status: 400 })
     }
 
-    // Truncate to 10000 chars to match textarea maxLength
-    const truncated = trimmed.slice(0, 10000)
+    // Truncate to 50000 chars to handle long briefs with appendices
+    const truncated = trimmed.slice(0, 50000)
 
     return NextResponse.json({ text: truncated, fileName: file.name, truncated: truncated.length < trimmed.length })
   } catch (err) {
