@@ -1076,13 +1076,7 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isF
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 300ms both' }}>
         <StrategicTensionsSection strategicAnalysis={strategicAnalysis} />
       </div>
-      {data.phantomAnalysis && data.phantomAnalysis.length > 0 ? (
-        <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 350ms both' }}>
-          <PhantomAnalysisSection phantoms={data.phantomAnalysis} />
-        </div>
-      ) : (
-        <PhantomLockedSection />
-      )}
+      {!isPro && <PhantomLockedSection />}
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 450ms both' }}>
         <RewrittenBriefSection strategicAnalysis={strategicAnalysis} extractedBrief={extractedBrief} isPro={isPro} briefText={data.briefText} />
       </div>

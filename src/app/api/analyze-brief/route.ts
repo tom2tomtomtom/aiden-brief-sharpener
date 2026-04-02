@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { canGenerate, incrementUsage, getUserPlan } from '@/lib/usage'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { runPhantomAnalysis, PhantomPerspective } from '@/lib/phantom-analysis'
 
-const BRAIN_API_BASE = process.env.AIDEN_BRAIN_API_URL ?? 'https://aiden-brain-v2-production.up.railway.app'
+const AIDEN_API_BASE = process.env.AIDEN_API_URL ?? 'https://aiden-api-production.up.railway.app'
+const AIDEN_API_KEY = process.env.AIDEN_API_KEY ?? ''
 
 interface AnalyzeBriefRequest {
   briefText: string
@@ -14,21 +14,24 @@ interface AnalyzeBriefRequest {
   briefType?: string
 }
 
-async function callBrainAPI<T>(path: string, body: unknown): Promise<T> {
+async function callAidenAPI<T>(path: string, body: unknown): Promise<T> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30000)
+  const timeout = setTimeout(() => controller.abort(), 60000) // 60s for Opus
 
   try {
-    const response = await fetch(`${BRAIN_API_BASE}${path}`, {
+    const response = await fetch(`${AIDEN_API_BASE}/api/v1${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': AIDEN_API_KEY,
+      },
       body: JSON.stringify(body),
       signal: controller.signal,
     })
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error')
-      throw new Error(`Brain API ${path} failed (${response.status}): ${errorText}`)
+      throw new Error(`AIDEN API ${path} failed (${response.status}): ${errorText}`)
     }
 
     return response.json() as Promise<T>
@@ -37,15 +40,37 @@ async function callBrainAPI<T>(path: string, body: unknown): Promise<T> {
   }
 }
 
-// Brain V2 returns different field names than expected. Map to canonical names.
-function hasValue(obj: Record<string, unknown>, ...fields: string[]): boolean {
-  for (const field of fields) {
-    const value = obj[field]
-    if (value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)) {
-      return true
+async function pollJob<T>(jobId: string, maxWait = 120000): Promise<T> {
+  const start = Date.now()
+  while (Date.now() - start < maxWait) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    try {
+      const response = await fetch(`${AIDEN_API_BASE}/api/v1/jobs/${jobId}/status`, {
+        headers: { 'X-API-Key': AIDEN_API_KEY },
+        signal: controller.signal,
+      })
+      const data = await response.json()
+
+      if (data.status === 'completed') {
+        // Fetch the result
+        const resultResp = await fetch(`${AIDEN_API_BASE}/api/v1/jobs/${jobId}/result`, {
+          headers: { 'X-API-Key': AIDEN_API_KEY },
+        })
+        return resultResp.json() as Promise<T>
+      }
+
+      if (data.status === 'failed') {
+        throw new Error(data.error || 'Analysis failed')
+      }
+    } finally {
+      clearTimeout(timeout)
     }
+
+    // Wait 2s before polling again
+    await new Promise(resolve => setTimeout(resolve, 2000))
   }
-  return false
+  throw new Error('Analysis timed out')
 }
 
 // Fields to check, with Brain V2 field name aliases
@@ -88,18 +113,15 @@ function scoreField(text: string | null): number {
 }
 
 function calculateBriefScore(briefText: string, extractedBrief: Record<string, unknown>): number {
-  // Field quality score: each of 8 fields scores 0-10 (max 80)
   let fieldScore = 0
   for (const { aliases } of BRIEF_CHECKS) {
     const value = getFieldValue(extractedBrief, aliases)
     fieldScore += scoreField(value)
   }
 
-  // Structure bonus (max 10): distinct sections indicated by newlines
   const lines = briefText.split('\n').filter(l => l.trim().length > 0)
   const structureScore = lines.length >= 4 ? 10 : lines.length >= 2 ? 5 : 0
 
-  // Completeness bonus (max 10): proportional to how many fields are present at all
   const presentCount = BRIEF_CHECKS.filter(({ aliases }) => getFieldValue(extractedBrief, aliases) !== null).length
   const completenessScore = Math.round((presentCount / BRIEF_CHECKS.length) * 10)
 
@@ -130,7 +152,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Auth check (optional - anonymous users can analyze, just no save/tracking)
+  // Auth check
   const supabase = createClient()
   const {
     data: { user },
@@ -170,37 +192,30 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Step 1: Extract structured brief via Brain V2
-    const extractResult = await callBrainAPI<{ content: Record<string, unknown> }>('/api/extract-brief', {
+    // Step 1: Extract structured brief via AIDEN API (Haiku - fast)
+    const extractResult = await callAidenAPI<{ success: boolean; data: Record<string, unknown> }>('/extract-brief', {
       brief_text: briefText,
       ...(brandName && { brand_name: brandName }),
       ...(industry && { industry }),
       ...(briefType && { brief_type: briefType }),
     })
-    const extractedBrief = extractResult.content ?? extractResult
+    const extractedBrief = extractResult.data?.content ?? extractResult.data ?? extractResult
 
-    // Step 2: Generate strategy from extracted brief via Brain V2
-    const strategicAnalysis = await callBrainAPI<Record<string, unknown>>('/aiden/generate-strategy', {
-      briefData: extractedBrief,
+    // Step 2: Score + identify gaps (local - no AI needed)
+    const score = calculateBriefScore(briefText, extractedBrief as Record<string, unknown>)
+    const gaps = identifyGaps(extractedBrief as Record<string, unknown>)
+
+    // Step 3: Full Brain strategic analysis via AIDEN API (Opus - phantom system fires)
+    // This is an async job, so we submit and poll
+    const strategyJob = await callAidenAPI<{ job_id: string }>('/generate/strategy', {
+      brief_data: extractedBrief,
     })
+    const strategicAnalysis = await pollJob<Record<string, unknown>>(strategyJob.job_id)
 
-    const score = calculateBriefScore(briefText, extractedBrief)
-    const gaps = identifyGaps(extractedBrief)
-
-    // Step 3: Phantom analysis for Pro users
-    let phantomAnalysis: PhantomPerspective[] | null = null
+    // Track usage and save for authenticated users
+    let generationId: string | null = null
     if (user) {
       const plan = await getUserPlan(adminSupabase, user.id)
-
-      if (plan === 'pro' || plan === 'agency') {
-        try {
-          phantomAnalysis = await runPhantomAnalysis(extractedBrief, briefText)
-        } catch (err) {
-          console.error('Phantom analysis failed (non-blocking):', err)
-        }
-      }
-
-      // Track usage and save
       await incrementUsage(adminSupabase, user.id, plan)
 
       const { data } = await adminSupabase
@@ -208,19 +223,11 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: user.id,
           input_data: { briefText, brandName, industry, briefType },
-          output_copy: { extractedBrief, strategicAnalysis, gaps, score, phantomAnalysis },
+          output_copy: { extractedBrief, strategicAnalysis, gaps, score },
         })
         .select('id')
         .single()
-
-      return NextResponse.json({
-        extractedBrief,
-        strategicAnalysis,
-        gaps,
-        score,
-        phantomAnalysis,
-        generationId: data?.id ?? null,
-      })
+      generationId = data?.id ?? null
     }
 
     return NextResponse.json({
@@ -228,8 +235,7 @@ export async function POST(request: NextRequest) {
       strategicAnalysis,
       gaps,
       score,
-      phantomAnalysis: null,
-      generationId: null,
+      generationId,
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -239,10 +245,11 @@ export async function POST(request: NextRequest) {
           { status: 504 }
         )
       }
-      if (error.message.includes('Brain API') || error.message.includes('Brain API key')) {
+      if (error.message.includes('AIDEN API') || error.message.includes('timed out')) {
         return NextResponse.json({ error: error.message }, { status: 502 })
       }
     }
+    console.error('Analysis error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
