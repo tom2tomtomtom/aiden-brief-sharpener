@@ -3,12 +3,21 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
+export interface PhantomPerspective {
+  role: string
+  shorthand: string
+  verdict: number
+  critique: string
+  suggestion: string
+}
+
 export interface BriefAnalysisData {
   extractedBrief: Record<string, unknown>
   strategicAnalysis: Record<string, unknown>
   gaps: string[]
   score: number
   briefText?: string
+  phantomAnalysis?: PhantomPerspective[] | null
 }
 
 interface BriefAnalysisProps {
@@ -553,34 +562,73 @@ function StrategicTensionsSection({ strategicAnalysis }: { strategicAnalysis: Re
   )
 }
 
-function PhantomCDLockedSection() {
+function verdictLabel(v: number): string {
+  if (v >= 5) return 'Sharp'
+  if (v >= 4) return 'Nearly there'
+  if (v >= 3) return 'Needs work'
+  if (v >= 2) return 'Weak'
+  return 'Missing'
+}
+
+function verdictColor(v: number): string {
+  if (v >= 4) return 'text-green-400'
+  if (v >= 3) return 'text-orange-accent'
+  return 'text-red-hot'
+}
+
+function PhantomAnalysisSection({ phantoms }: { phantoms: PhantomPerspective[] }) {
   return (
     <section>
       <div className="mb-4 flex items-center">
-        <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Phantom Creative Director</h2>
+        <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Phantom Perspectives</h2>
+        <span className="ml-2 inline-flex items-center border border-border-strong px-2 py-0.5 text-xs font-semibold text-orange-accent">Pro</span>
+      </div>
+      <p className="mb-4 text-sm text-white-muted">Four expert strategic perspectives interrogated your brief independently.</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {phantoms.map((p) => (
+          <div key={p.role} className="border border-border-subtle bg-black-card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-orange-accent">{p.role}</p>
+              <span className={`text-xs font-bold ${verdictColor(p.verdict)}`}>{p.verdict}/5 {verdictLabel(p.verdict)}</span>
+            </div>
+            <p className="text-sm text-white leading-relaxed">{p.critique}</p>
+            <div className="mt-3 border-t border-border-subtle pt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-white-dim mb-1">How to fix</p>
+              <p className="text-sm text-white-muted leading-relaxed">{p.suggestion}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function PhantomLockedSection() {
+  return (
+    <section>
+      <div className="mb-4 flex items-center">
+        <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Phantom Perspectives</h2>
         <span className="ml-2 inline-flex items-center border border-border-strong px-2 py-0.5 text-xs font-semibold text-orange-accent">Pro</span>
       </div>
       <div className="relative overflow-hidden border border-border-strong bg-black-card">
-        {/* Blurred preview */}
         <div className="select-none p-5 blur-sm pointer-events-none" aria-hidden="true">
           <div className="grid gap-3 sm:grid-cols-2">
-            {['Provocateur', 'Strategist', 'Contrarian', 'Empath'].map((role) => (
+            {['The Audience Skeptic', 'The Single-Minded Purist', 'The Tension Finder', 'The Scope Realist'].map((role) => (
               <div key={role} className="border border-border-subtle bg-black-card p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-orange-accent">{role}</p>
-                <p className="mt-1 text-sm text-white">This brief lacks a clear emotional hook. Push harder on the tension between aspiration and reality — that&apos;s where the work lives.</p>
+                <p className="mt-1 text-sm text-white">This brief lacks a clear emotional hook. Push harder on the tension between aspiration and reality.</p>
               </div>
             ))}
           </div>
         </div>
-        {/* Lock overlay */}
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm px-6 text-center">
           <div className="flex h-12 w-12 items-center justify-center border border-border-strong bg-black-card">
             <svg className="h-6 w-6 text-orange-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
-          <h3 className="mt-3 text-base font-semibold uppercase tracking-wider text-white">Unlock Phantom Creative Director</h3>
-          <p className="mt-1 text-sm text-white-muted max-w-xs">See how expert creative perspectives would attack this brief.</p>
+          <h3 className="mt-3 text-base font-semibold uppercase tracking-wider text-white">Unlock Phantom Perspectives</h3>
+          <p className="mt-1 text-sm text-white-muted max-w-xs">Four expert strategic perspectives interrogate your brief independently. See what each one finds.</p>
           <Link
             href="/pricing"
             className="mt-4 inline-flex items-center gap-1.5 bg-red-hot px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-dim transition-colors"
@@ -1028,7 +1076,13 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isF
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 300ms both' }}>
         <StrategicTensionsSection strategicAnalysis={strategicAnalysis} />
       </div>
-      {!isPro && <PhantomCDLockedSection />}
+      {data.phantomAnalysis && data.phantomAnalysis.length > 0 ? (
+        <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 350ms both' }}>
+          <PhantomAnalysisSection phantoms={data.phantomAnalysis} />
+        </div>
+      ) : (
+        <PhantomLockedSection />
+      )}
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 450ms both' }}>
         <RewrittenBriefSection strategicAnalysis={strategicAnalysis} extractedBrief={extractedBrief} isPro={isPro} briefText={data.briefText} />
       </div>

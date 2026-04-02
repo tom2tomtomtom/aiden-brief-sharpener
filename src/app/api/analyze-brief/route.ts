@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { canGenerate, incrementUsage, getUserPlan } from '@/lib/usage'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { runPhantomAnalysis, PhantomPerspective } from '@/lib/phantom-analysis'
 
 const BRAIN_API_BASE = process.env.AIDEN_BRAIN_API_URL ?? 'https://aiden-brain-v2-production.up.railway.app'
 
@@ -143,10 +144,20 @@ export async function POST(request: NextRequest) {
     const score = calculateBriefScore(briefText, extractedBrief)
     const gaps = identifyGaps(extractedBrief)
 
-    // Track usage and save for authenticated users
-    let generation: { id: string } | null = null
+    // Step 3: Phantom analysis for Pro users
+    let phantomAnalysis: PhantomPerspective[] | null = null
     if (user) {
       const plan = await getUserPlan(adminSupabase, user.id)
+
+      if (plan === 'pro') {
+        try {
+          phantomAnalysis = await runPhantomAnalysis(extractedBrief, briefText)
+        } catch (err) {
+          console.error('Phantom analysis failed (non-blocking):', err)
+        }
+      }
+
+      // Track usage and save
       await incrementUsage(adminSupabase, user.id, plan)
 
       const { data } = await adminSupabase
@@ -154,11 +165,19 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: user.id,
           input_data: { briefText, brandName, industry, briefType },
-          output_copy: { extractedBrief, strategicAnalysis, gaps, score },
+          output_copy: { extractedBrief, strategicAnalysis, gaps, score, phantomAnalysis },
         })
         .select('id')
         .single()
-      generation = data
+
+      return NextResponse.json({
+        extractedBrief,
+        strategicAnalysis,
+        gaps,
+        score,
+        phantomAnalysis,
+        generationId: data?.id ?? null,
+      })
     }
 
     return NextResponse.json({
@@ -166,7 +185,8 @@ export async function POST(request: NextRequest) {
       strategicAnalysis,
       gaps,
       score,
-      generationId: generation?.id ?? null,
+      phantomAnalysis: null,
+      generationId: null,
     })
   } catch (error) {
     if (error instanceof Error) {
