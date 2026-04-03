@@ -233,10 +233,10 @@ Output ONLY the rewritten brief. No commentary, no preamble, no "here is the rew
 
     let rewrittenBrief: string | null = null
     try {
-      const chatResult = await callAidenAPI<{ success: boolean; data: { response: string } }>('/chat', {
+      const chatResult = await callAidenAPI<{ success: boolean; data: { content: string; metadata?: unknown } }>('/chat', {
         message: rewritePrompt,
       })
-      rewrittenBrief = chatResult.data?.response ?? chatResult.data?.toString() ?? null
+      rewrittenBrief = chatResult.data?.content ?? null
     } catch (err) {
       console.error('Brief rewrite failed (non-blocking):', err)
     }
