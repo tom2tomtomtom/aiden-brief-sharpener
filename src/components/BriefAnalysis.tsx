@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 
 export interface PhantomPerspective {
   role: string
@@ -492,6 +493,39 @@ function TensionCards({ tensions }: { tensions: unknown[] }) {
   )
 }
 
+function MarkdownContent({ content }: { content: string }) {
+  return (
+    <div className="prose prose-invert prose-sm max-w-none
+      prose-headings:text-white prose-headings:font-semibold prose-headings:uppercase prose-headings:tracking-wide
+      prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
+      prose-p:text-white-muted prose-p:leading-relaxed
+      prose-strong:text-white prose-em:text-orange-accent
+      prose-li:text-white-muted prose-li:leading-relaxed
+      prose-ul:space-y-1 prose-ol:space-y-1
+      prose-hr:border-border-subtle
+      prose-a:text-orange-accent prose-a:no-underline hover:prose-a:text-red-hot">
+      <ReactMarkdown>{content}</ReactMarkdown>
+    </div>
+  )
+}
+
+function StrategicAnalysisSection({ strategicAnalysis }: { strategicAnalysis: Record<string, unknown> }) {
+  const analysis = (strategicAnalysis.aidenAnalysis ?? strategicAnalysis.aiden_analysis) as string | undefined
+  if (!analysis) return null
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center gap-3">
+        <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Strategic Analysis</h2>
+        <CopyButton text={analysis} />
+      </div>
+      <div className="border border-border-subtle bg-black-card p-6">
+        <MarkdownContent content={analysis} />
+      </div>
+    </section>
+  )
+}
+
 function StrategicTensionsSection({ strategicAnalysis }: { strategicAnalysis: Record<string, unknown> }) {
   const tensionFields = ['tensions', 'strategic_tensions', 'cultural_tensions', 'audience_tensions', 'key_tensions']
   let tensions: unknown[] = []
@@ -759,12 +793,12 @@ function RewrittenBriefSection({ strategicAnalysis, extractedBrief, isPro, brief
           </div>
           <div className="border border-border-subtle bg-black-card p-5" style={{ background: 'rgba(255,46,46,0.04)' }}>
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-orange-accent border-b border-border-subtle pb-2">Sharpened Brief</p>
-            <BriefLines lines={sharpenedLines} />
+            <MarkdownContent content={rewrittenBrief} />
           </div>
         </div>
       ) : (
         <div className="border border-border-subtle bg-black-card p-5">
-          <BriefLines lines={sharpenedLines} />
+          <MarkdownContent content={rewrittenBrief} />
         </div>
       )}
     </section>
@@ -1079,7 +1113,10 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isF
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 150ms both' }}>
         <GapAnalysisSection gaps={gaps} strategicAnalysis={strategicAnalysis} />
       </div>
-      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 300ms both' }}>
+      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 250ms both' }}>
+        <StrategicAnalysisSection strategicAnalysis={strategicAnalysis} />
+      </div>
+      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 350ms both' }}>
         <StrategicTensionsSection strategicAnalysis={strategicAnalysis} />
       </div>
       {isPro === false && <PhantomLockedSection />}
