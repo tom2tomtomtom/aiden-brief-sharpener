@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { canGenerate, incrementUsage, getUserPlan } from '@/lib/usage'
 import { checkRateLimit } from '@/lib/rate-limit'
-import Anthropic from '@anthropic-ai/sdk'
 
 const AIDEN_API_BASE = process.env.AIDEN_API_URL ?? 'https://aiden-api-production.up.railway.app'
 const AIDEN_API_KEY = process.env.AIDEN_API_KEY ?? ''
@@ -15,9 +14,9 @@ interface AnalyzeBriefRequest {
   briefType?: string
 }
 
-async function callAidenAPI<T>(path: string, body: unknown): Promise<T> {
+async function callAidenAPI<T>(path: string, body: unknown, timeoutMs = 60000): Promise<T> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000) // 60s for Opus
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetch(`${AIDEN_API_BASE}/api/v1${path}`, {
@@ -39,40 +38,6 @@ async function callAidenAPI<T>(path: string, body: unknown): Promise<T> {
   } finally {
     clearTimeout(timeout)
   }
-}
-
-async function pollJob<T>(jobId: string, maxWait = 120000): Promise<T> {
-  const start = Date.now()
-  while (Date.now() - start < maxWait) {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 10000)
-    try {
-      const response = await fetch(`${AIDEN_API_BASE}/api/v1/jobs/${jobId}/status`, {
-        headers: { 'X-API-Key': AIDEN_API_KEY },
-        signal: controller.signal,
-      })
-      const data = await response.json()
-
-      if (data.status === 'completed') {
-        // Fetch the result
-        const resultResp = await fetch(`${AIDEN_API_BASE}/api/v1/jobs/${jobId}/result`, {
-          headers: { 'X-API-Key': AIDEN_API_KEY },
-        })
-        const result = await resultResp.json()
-        return (result.data ?? result) as T
-      }
-
-      if (data.status === 'failed') {
-        throw new Error(data.error || 'Analysis failed')
-      }
-    } finally {
-      clearTimeout(timeout)
-    }
-
-    // Wait 2s before polling again
-    await new Promise(resolve => setTimeout(resolve, 2000))
-  }
-  throw new Error('Analysis timed out')
 }
 
 // Fields to check, with Brain V2 field name aliases
@@ -201,50 +166,76 @@ export async function POST(request: NextRequest) {
       ...(industry && { industry }),
       ...(briefType && { brief_type: briefType }),
     })
-    const extractedBrief = extractResult.data?.content ?? extractResult.data ?? extractResult
+    const extractedBrief = (extractResult.data?.content ?? extractResult.data ?? extractResult) as Record<string, unknown>
 
     // Step 2: Score + identify gaps (local - no AI needed)
-    const score = calculateBriefScore(briefText, extractedBrief as Record<string, unknown>)
-    const gaps = identifyGaps(extractedBrief as Record<string, unknown>)
+    const score = calculateBriefScore(briefText, extractedBrief)
+    const gaps = identifyGaps(extractedBrief)
 
-    // Step 3: Full Brain strategic analysis via AIDEN API (Opus - phantom system fires)
-    // This is an async job, so we submit and poll
-    const strategyJob = await callAidenAPI<{ job_id: string }>('/generate/strategy', {
-      brief_data: extractedBrief,
-    })
-    const strategicAnalysis = await pollJob<Record<string, unknown>>(strategyJob.job_id)
+    // Step 3: Brain analysis + rewrite in ONE call (Opus + phantom system)
+    // Same pattern as Studio V2's BriefStep - Brain returns analysis AND rewritten brief
+    const brainMessage = `I've just parsed this campaign brief. Here's what I extracted:
 
-    // Step 4: Rewrite the brief (Sonnet - fast, good quality for rewriting)
-    // Uses direct Anthropic call, not Brain/AIDEN API, to stay within Vercel timeout
+Campaign: ${extractedBrief.campaign_name || 'Unknown'}
+Objectives: ${Array.isArray(extractedBrief.objectives) ? (extractedBrief.objectives as string[]).join(', ') : extractedBrief.objectives || 'Not specified'}
+Target Audience: ${extractedBrief.target_audience || extractedBrief.audience || 'Not specified'}
+Tone: ${extractedBrief.tone || extractedBrief.tone_of_voice || 'Not specified'}
+Platforms: ${Array.isArray(extractedBrief.platforms) ? (extractedBrief.platforms as string[]).join(', ') : extractedBrief.platforms || 'Not specified'}
+Requirements: ${extractedBrief.requirements || extractedBrief.deliverables || 'Not specified'}
+Budget: ${extractedBrief.budget || 'Not specified'}
+Timeline: ${extractedBrief.timeline || extractedBrief.timing || 'Not specified'}
+
+Gaps identified: ${gaps.length > 0 ? gaps.join(', ') : 'None'}
+Brief quality score: ${score}/100
+
+Please provide two things:
+
+## STRATEGIC ANALYSIS & RECOMMENDATIONS
+
+Give me your honest creative director take on this brief. What's the idea here? Is it strong enough? What would you push harder on? Where's the missed opportunity? What tensions or insights could the work be built on? Be conclusive and actionable in your recommendations.
+
+## AIDEN'S VERSION OF THE BRIEF
+
+Rewrite this brief as a cohesive narrative that captures the strategic intent, sharpens the objectives, fills every gap (${gaps.map(g => g.split(' (')[0]).join(', ')}), and provides clear creative direction. This will be the master brief used throughout campaign development. Make it concise but comprehensive, focusing on what truly matters for creating breakthrough work.
+
+IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS & RECOMMENDATIONS and ## AIDEN'S VERSION OF THE BRIEF). Write in conversational text, but be conclusive. This is your definitive take.`
+
+    const chatResult = await callAidenAPI<{ success: boolean; data: { content: string; metadata?: unknown } }>('/chat', {
+      message: brainMessage,
+      context: {
+        briefData: extractedBrief,
+      },
+    }, 55000) // 55s timeout to fit within Vercel's 60s limit
+
+    const brainResponse = chatResult.data?.content ?? ''
+
+    // Parse Brain response into analysis and rewritten brief (same as Studio V2)
+    let strategicAnalysis: Record<string, unknown> = {}
     let rewrittenBrief: string | null = null
-    try {
-      const anthropic = new Anthropic()
-      const rewriteResult = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: 'You are an expert creative strategist rewriting briefs. Output ONLY the rewritten brief. No commentary, no preamble.',
-        messages: [{
-          role: 'user',
-          content: `Rewrite this creative brief completely. Fill every gap. Strengthen every thin section.
 
-ORIGINAL BRIEF:
-${briefText.slice(0, 5000)}
+    const sections = brainResponse.split(/##\s*AIDEN'S VERSION OF THE BRIEF/i)
+    if (sections.length === 2) {
+      const analysisSection = sections[0]
+        .replace(/##\s*STRATEGIC ANALYSIS & RECOMMENDATIONS/i, '')
+        .trim()
+      const briefSection = sections[1].trim()
 
-GAPS IDENTIFIED:
-${gaps.join('\n')}
+      strategicAnalysis = {
+        aidenAnalysis: analysisSection,
+        rawResponse: brainResponse,
+      }
+      rewrittenBrief = briefSection
+    } else {
+      // Fallback: use entire response as analysis
+      strategicAnalysis = {
+        aidenAnalysis: brainResponse,
+        rawResponse: brainResponse,
+      }
+    }
 
-STRATEGIC ANALYSIS:
-${JSON.stringify(strategicAnalysis, null, 2).slice(0, 3000)}
-
-Add the missing elements (${gaps.map(g => g.split(' (')[0]).join(', ')}). Make the audience specific with psychographics. Make the objective measurable. Add a clear tension or insight. Make deliverables specific with formats and platforms.
-
-Preserve the author's intent. Write it as a polished, ready-to-brief document.`
-        }],
-      })
-      const text = rewriteResult.content[0]
-      rewrittenBrief = text.type === 'text' ? text.text : null
-    } catch (err) {
-      console.error('Brief rewrite failed (non-blocking):', err)
+    // Include extraction-level analysis too
+    if (extractedBrief.aiden_analysis) {
+      strategicAnalysis.extractionAnalysis = extractedBrief.aiden_analysis
     }
 
     // Track usage and save for authenticated users
@@ -258,7 +249,7 @@ Preserve the author's intent. Write it as a polished, ready-to-brief document.`
         .insert({
           user_id: user.id,
           input_data: { briefText, brandName, industry, briefType },
-          output_copy: { extractedBrief, strategicAnalysis, gaps, score },
+          output_copy: { extractedBrief, strategicAnalysis, gaps, score, rewrittenBrief },
         })
         .select('id')
         .single()
