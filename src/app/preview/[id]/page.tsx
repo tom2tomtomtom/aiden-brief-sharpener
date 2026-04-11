@@ -1,3 +1,15 @@
+/**
+ * Preview page — public share link for a brief analysis.
+ *
+ * ACCESS MODEL: Secret link. Anyone with the UUID can view the analysis.
+ * UUIDs are cryptographically random (v4) and not enumerable.
+ * This is the same pattern used by Google Docs "anyone with the link" sharing.
+ * We use an admin Supabase client (bypasses RLS) because the viewer may not be
+ * the owner — or may not be authenticated at all.
+ *
+ * If owner-only access is needed in the future, add an auth check here and
+ * compare the viewer's user_id against the generation's user_id.
+ */
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import type { Metadata } from 'next'

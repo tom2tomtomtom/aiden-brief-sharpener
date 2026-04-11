@@ -1410,15 +1410,15 @@ function DownloadPDFButton({ data, isPaidUser }: { data: BriefAnalysisData; isPa
     return (
       <Link
         href="/pricing"
-        title="Upgrade to export PDF"
+        title="Upgrade to export as printable report"
         className="inline-flex items-center gap-1.5 border border-border-subtle bg-black-card px-3 py-1.5 text-xs font-semibold text-white-dim cursor-not-allowed select-none"
         tabIndex={-1}
         aria-disabled="true"
       >
         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
         </svg>
-        Download PDF
+        Print report
         <span className="ml-0.5 bg-white-faint px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white-dim">Pro</span>
       </Link>
     )
@@ -1427,12 +1427,13 @@ function DownloadPDFButton({ data, isPaidUser }: { data: BriefAnalysisData; isPa
   return (
     <button
       onClick={handleClick}
+      title="Opens a print-ready report — use your browser's Save as PDF to download"
       className="inline-flex items-center gap-1.5 border border-border-subtle bg-black-card px-3 py-1.5 text-xs font-semibold text-white-muted hover:bg-white-faint transition-colors"
     >
       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
       </svg>
-      Download PDF
+      Print report
     </button>
   )
 }

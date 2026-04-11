@@ -37,18 +37,20 @@ export default function TermsPage() {
             <div>
               <h2 className="text-lg font-semibold text-white uppercase mb-3">1. The Service</h2>
               <p>
-                AIDEN is an AI-powered brief analysis tool. When you provide a creative brief, AIDEN uses
-                Claude by Anthropic to identify gaps, assumptions, and ambiguities, then generates a scored
-                brief report. The analysis is created by an AI model and may not be suitable for all use cases without review.
+                AIDEN Brief Intelligence is an AI-powered brief analysis tool. When you provide a creative brief,
+                AIDEN uses AI to identify gaps, assumptions, and ambiguities, then generates a scored analysis with
+                strategic recommendations, classic benchmark comparisons, and a rewritten brief. The analysis is
+                created by AI models and may not be suitable for all use cases without human review.
               </p>
             </div>
 
             <div>
               <h2 className="text-lg font-semibold text-white uppercase mb-3">2. Ownership of Generated Output</h2>
               <p>
-                You own the brief reports AIDEN generates for you. Once downloaded, the reports and analysis are yours
-                to use, modify, and distribute however you see fit — commercially or otherwise — without attribution
-                to AIDEN (except on the free plan, which includes a small &ldquo;Built with AIDEN&rdquo; footer link).
+                You own the brief analyses AIDEN generates for you. Once downloaded, the analyses and
+                recommendations are yours to use, modify, and distribute however you see fit — commercially or
+                otherwise — without attribution to AIDEN (except on the free plan, which includes a small
+                &ldquo;Analysed by AIDEN&rdquo; attribution when copied).
               </p>
             </div>
 
@@ -66,13 +68,13 @@ export default function TermsPage() {
               <h2 className="text-lg font-semibold text-white uppercase mb-3">4. Payment Terms</h2>
               <p className="mb-3">AIDEN offers the following plans:</p>
               <ul className="list-disc pl-5 space-y-2">
-                <li><strong className="text-white">Free:</strong> 3 generations per month at no cost. No credit card required.</li>
-                <li><strong className="text-white">Single ($30 one-time):</strong> A single generation with no attribution footer. This is a one-time charge &mdash; you will not be billed again.</li>
-                <li><strong className="text-white">Pro ($99/month):</strong> Unlimited generations billed monthly. You can cancel at any time; cancellation takes effect at the end of the current billing period.</li>
+                <li><strong className="text-white">Free:</strong> 3 brief analyses per month at no cost. No credit card required.</li>
+                <li><strong className="text-white">Single ($30 one-time):</strong> 50 brief analyses with no attribution footer. This is a one-time charge &mdash; you will not be billed again.</li>
+                <li><strong className="text-white">Pro ($99/month):</strong> Unlimited brief analyses billed monthly. You can cancel at any time; cancellation takes effect at the end of the current billing period.</li>
               </ul>
               <p className="mt-3">
                 All payments are processed by Stripe. Charges appear on your statement as &ldquo;AIDEN&rdquo;. We do not
-                offer refunds on completed generations, but please contact us if you experience a technical issue.
+                offer refunds on completed analyses, but please contact us if you experience a technical issue.
               </p>
             </div>
 

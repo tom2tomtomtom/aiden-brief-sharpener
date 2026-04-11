@@ -67,15 +67,21 @@ function ToastPortal({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: n
 
   if (!mounted) return null
 
+  const successToasts = toasts.filter(t => t.type === 'success')
+  const errorToasts = toasts.filter(t => t.type === 'error')
+
   return createPortal(
-    <div
-      aria-live="polite"
-      aria-atomic="false"
-      className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col gap-2"
-    >
-      {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
-      ))}
+    <div className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col gap-2">
+      <div aria-live="polite" aria-atomic="false">
+        {successToasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
+        ))}
+      </div>
+      <div aria-live="assertive" aria-atomic="false">
+        {errorToasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
+        ))}
+      </div>
     </div>,
     document.body,
   )

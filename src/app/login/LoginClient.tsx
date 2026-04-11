@@ -13,6 +13,15 @@ function LoginForm() {
   const [errorMessage, setErrorMessage] = useState('')
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const authError = searchParams.get('error')
+
+  // Surface callback errors on first render
+  useState(() => {
+    if (authError === 'auth') {
+      setErrorMessage('Sign-in failed. The link may have expired — please try again.')
+      setStatus('error')
+    }
+  })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

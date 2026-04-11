@@ -39,8 +39,8 @@ export default function PrivacyPage() {
               <p>We collect only what is necessary to run the service:</p>
               <ul className="list-disc pl-5 mt-3 space-y-2">
                 <li><strong className="text-white">Email address:</strong> Collected when you create an account or sign in. Used for authentication and to send you important account-related messages (e.g. billing receipts, password resets).</li>
-                <li><strong className="text-white">Product descriptions:</strong> The text you enter when generating a landing page. Stored to power the generation and accessible in your dashboard.</li>
-                <li><strong className="text-white">Usage data:</strong> Number of generations used, plan type, and timestamps. Used to enforce plan limits and improve the service.</li>
+                <li><strong className="text-white">Brief content:</strong> The text you enter when analysing a brief. Stored to power the analysis and accessible in your dashboard.</li>
+                <li><strong className="text-white">Usage data:</strong> Number of analyses used, plan type, and timestamps. Used to enforce plan limits and improve the service.</li>
               </ul>
             </div>
 
@@ -69,9 +69,10 @@ export default function PrivacyPage() {
             <div>
               <h2 className="text-lg font-semibold text-white uppercase mb-3">4. Cookies</h2>
               <p>
-                We use cookies solely for authentication. When you sign in, a session cookie is set so you stay
-                logged in. This cookie is essential for the service to function and does not track you across
-                other websites.
+                We use cookies for authentication and guest usage tracking. When you sign in, a session cookie
+                is set so you stay logged in. Guest users receive an anonymous identifier cookie to enforce
+                monthly usage limits. These cookies are essential for the service to function and do not track
+                you across other websites.
               </p>
             </div>
 
@@ -86,7 +87,7 @@ export default function PrivacyPage() {
             <div>
               <h2 className="text-lg font-semibold text-white uppercase mb-3">6. Data Retention</h2>
               <p>
-                Your account data and generated pages are retained as long as your account is active. You can
+                Your account data and brief analyses are retained as long as your account is active. You can
                 delete your account at any time by contacting us, and we will remove your personal data within
                 30 days.
               </p>
@@ -98,7 +99,7 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-5 mt-3 space-y-2">
                 <li><strong className="text-white">Supabase:</strong> Authentication and database hosting.</li>
                 <li><strong className="text-white">Stripe:</strong> Payment processing.</li>
-                <li><strong className="text-white">Anthropic (Claude):</strong> AI content generation. Your product description is sent to Anthropic&apos;s API to generate the landing page copy.</li>
+                <li><strong className="text-white">AIDEN AI API:</strong> AI brief analysis. Your brief content is sent to the AIDEN API for extraction, scoring, and strategic analysis.</li>
                 <li><strong className="text-white">Vercel:</strong> Hosting and analytics.</li>
               </ul>
               <p className="mt-3">Each of these services operates under their own privacy policies.</p>

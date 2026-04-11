@@ -14,8 +14,14 @@ export async function checkRateLimit(
 ): Promise<{ allowed: boolean; retryAfter?: number }> {
   const supabase = createAdminClient()
   const now = new Date()
+  const nowIso = now.toISOString()
 
-  // Fetch existing record for this IP
+  // Atomic upsert — always write, then read the result to decide
+  await supabase.from('rate_limits').upsert(
+    { ip, request_count: 1, window_start: nowIso },
+    { onConflict: 'ip', ignoreDuplicates: true }
+  )
+
   const { data: existing } = await supabase
     .from('rate_limits')
     .select('request_count, window_start')
@@ -23,12 +29,6 @@ export async function checkRateLimit(
     .single()
 
   if (!existing) {
-    // First request from this IP - insert and allow
-    await supabase.from('rate_limits').upsert({
-      ip,
-      request_count: 1,
-      window_start: now.toISOString(),
-    })
     return { allowed: true }
   }
 
@@ -36,25 +36,26 @@ export async function checkRateLimit(
   const elapsedSeconds = (now.getTime() - windowStart.getTime()) / 1000
 
   if (elapsedSeconds >= WINDOW_SECONDS) {
-    // Window expired - reset counter
+    // Window expired — reset atomically
     await supabase
       .from('rate_limits')
-      .update({ request_count: 1, window_start: now.toISOString() })
+      .update({ request_count: 1, window_start: nowIso })
       .eq('ip', ip)
+      .eq('window_start', existing.window_start)
     return { allowed: true }
   }
 
   if (existing.request_count >= MAX_REQUESTS) {
-    // Over limit - return retry info
     const retryAfter = Math.ceil(WINDOW_SECONDS - elapsedSeconds)
     return { allowed: false, retryAfter }
   }
 
-  // Under limit - increment
+  // Conditional increment — only if count hasn't changed (optimistic lock)
   await supabase
     .from('rate_limits')
     .update({ request_count: existing.request_count + 1 })
     .eq('ip', ip)
+    .eq('request_count', existing.request_count)
 
   return { allowed: true }
 }

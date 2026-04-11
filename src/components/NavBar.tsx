@@ -20,6 +20,12 @@ export default function NavBar() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsAuthenticated(!!user)
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const authLink = isAuthenticated

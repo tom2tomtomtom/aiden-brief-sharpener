@@ -239,6 +239,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'briefText is required' }, { status: 400 })
   }
 
+  if (briefText.trim().length < 50) {
+    return NextResponse.json({ error: 'Brief is too short. Please provide at least a few sentences for meaningful analysis.' }, { status: 400 })
+  }
+
+  if (briefText.length > 100000) {
+    return NextResponse.json({ error: 'Brief text exceeds maximum length (100,000 characters).' }, { status: 400 })
+  }
+
   let guestIdentifier: string | null = null
   if (!user) {
     guestIdentity = getGuestIdentity(request)
