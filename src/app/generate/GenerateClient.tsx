@@ -7,6 +7,7 @@ import BriefAnalysis, { BriefAnalysisData } from '@/components/BriefAnalysis'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { ToastProvider, useToast } from '@/components/Toast'
 import { createClient } from '@/lib/supabase/client'
+import { trackEvent } from '@/lib/analytics'
 
 type Status = 'idle' | 'loading' | 'done' | 'error'
 type Plan = 'free' | 'single' | 'pro' | 'agency'
@@ -63,6 +64,7 @@ function GeneratePageInner() {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [mobileResultsCollapsed, setMobileResultsCollapsed] = useState(false)
+  const [previousScore, setPreviousScore] = useState<number | null>(null)
   const emailModalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const formPanelRef = useRef<HTMLDivElement>(null)
 
@@ -127,6 +129,13 @@ function GeneratePageInner() {
   }, [])
 
   async function handleGenerate(formData: GenerateFormData) {
+    const isRerun = !!analysisData
+    if (isRerun) {
+      setPreviousScore(analysisData.score)
+      trackEvent({ name: 'reinterrogate', previousScore: analysisData.score })
+    }
+    trackEvent({ name: 'analysis_started', briefLength: formData.briefText.length, hasFile: false })
+    const analyzeStart = Date.now()
     setStatus('loading')
     setApiError(null)
     setLastFormData(formData)
@@ -162,19 +171,23 @@ function GeneratePageInner() {
       }
 
       const data = await response.json()
-      setAnalysisData(data as BriefAnalysisData)
+      const analysisResult = data as BriefAnalysisData
+      setAnalysisData(analysisResult)
       setGenerationId(data.generationId ?? null)
       setMobileResultsCollapsed(false)
       setStatus('done')
       setCompletedAt(new Date().toLocaleTimeString())
       setPlanInfo(prev => prev && prev.plan !== 'pro' && prev.plan !== 'agency' ? { ...prev, used: prev.used + 1 } : prev)
+      trackEvent({ name: 'analysis_completed', score: analysisResult.score, gapCount: analysisResult.gaps.length, durationMs: Date.now() - analyzeStart })
       showToast('Brief analysis complete!')
       if (!localStorage.getItem('aiden_first_analysis_done')) {
         localStorage.setItem('aiden_first_analysis_done', 'true')
         setIsFirstAnalysis(true)
       }
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      const errorMsg = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      trackEvent({ name: 'analysis_error', error: errorMsg })
+      setApiError(errorMsg)
       setStatus('error')
     }
   }
@@ -211,6 +224,11 @@ function GeneratePageInner() {
                   <span className="font-semibold text-white">{Math.max(0, 3 - planInfo.used)}</span>
                   {' '}free {Math.max(0, 3 - planInfo.used) === 1 ? 'analysis' : 'analyses'} remaining
                 </span>
+              )}
+              {isAuthenticated && (
+                <Link href="/dashboard" className="text-sm font-medium text-white-muted hover:text-orange-accent transition-colors">
+                  Dashboard
+                </Link>
               )}
               <Link href="/pricing" className="text-sm font-medium text-orange-accent hover:text-red-hot transition-colors">
                 Pricing
@@ -363,6 +381,7 @@ function GeneratePageInner() {
                   isPro={planInfo?.plan === 'pro' || planInfo?.plan === 'agency'}
                   isPaidUser={planInfo?.plan !== 'free' && planInfo?.plan !== undefined}
                   isFirstAnalysis={isFirstAnalysis}
+                  previousScore={previousScore}
                 />
               </div>
             )}

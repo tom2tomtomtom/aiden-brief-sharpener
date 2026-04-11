@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 const tiers = [
   {
@@ -76,6 +77,35 @@ const tiers = [
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [billingPortalLoading, setBillingPortalLoading] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsAuthenticated(!!user)
+    })
+  }, [])
+
+  async function handleBillingPortal() {
+    setBillingPortalLoading(true)
+    try {
+      const res = await fetch('/api/billing-portal', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        if (res.status === 404) {
+          setError('No active subscription found. Subscribe to a paid plan first.')
+          return
+        }
+        throw new Error(data.error || 'Failed to open billing portal')
+      }
+      window.location.href = data.url
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setBillingPortalLoading(false)
+    }
+  }
 
   async function handleCheckout(plan: 'single' | 'pro') {
     setLoading(plan)
@@ -261,8 +291,23 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Footer note */}
-      <p className="text-center text-sm text-white-dim mt-12 uppercase tracking-wide">
+      {/* Billing management */}
+      {isAuthenticated && (
+        <div className="max-w-md mx-auto mt-12 text-center space-y-3">
+          <button
+            onClick={handleBillingPortal}
+            disabled={billingPortalLoading}
+            className="inline-flex items-center gap-2 border border-border-subtle bg-black-card px-5 py-2.5 text-sm font-medium text-white-muted hover:text-white hover:border-white transition-colors disabled:opacity-60"
+          >
+            {billingPortalLoading ? 'Opening...' : 'Manage billing & invoices'}
+          </button>
+          <p className="text-xs text-white-dim">
+            <Link href="/dashboard" className="text-orange-accent hover:text-red-hot transition-colors">Back to dashboard</Link>
+          </p>
+        </div>
+      )}
+
+      <p className="text-center text-sm text-white-dim mt-8 uppercase tracking-wide">
         Payments processed securely by Stripe. Cancel anytime.
       </p>
     </main>

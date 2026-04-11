@@ -12,14 +12,63 @@ export interface PhantomPerspective {
   suggestion: string
 }
 
+export interface DimensionScore {
+  dimension: string
+  score: number
+  maxScore: number
+  status: 'missing' | 'thin' | 'adequate' | 'strong'
+  evidence: string
+}
+
+export interface ScoreBreakdown {
+  total: number
+  dimensions: DimensionScore[]
+  structureScore: number
+  completenessScore: number
+}
+
+export interface ClassicStandardScore {
+  standard: string
+  master: string
+  score: number
+  maxScore: number
+  verdict: string
+  advice: string
+}
+
+export interface ClassicBriefRef {
+  id: string
+  campaign: string
+  brand: string
+  year: string
+  agency: string
+  singleMindedProposition: string
+  humanTruth: string
+  whyItWorked: string
+  briefStrength: string
+  industry: string
+}
+
+export interface MarketInsightData {
+  category: 'audience' | 'competitive' | 'channel' | 'benchmark' | 'trend'
+  insight: string
+  source: string
+  relevance: 'high' | 'medium'
+}
+
 export interface BriefAnalysisData {
   extractedBrief: Record<string, unknown>
   strategicAnalysis: Record<string, unknown>
   gaps: string[]
   score: number
+  scoreBreakdown?: ScoreBreakdown
   briefText?: string
   rewrittenBrief?: string | null
   phantomAnalysis?: PhantomPerspective[] | null
+  clarifyingQuestions?: string[]
+  classicScores?: ClassicStandardScore[]
+  classicBenchmarks?: ClassicBriefRef[]
+  marketInsights?: MarketInsightData[]
 }
 
 interface BriefAnalysisProps {
@@ -28,6 +77,7 @@ interface BriefAnalysisProps {
   isPro?: boolean
   isPaidUser?: boolean
   isFirstAnalysis?: boolean
+  previousScore?: number | null
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -167,6 +217,105 @@ function ScoreCircle({ score, showCelebration }: { score: number; showCelebratio
       <p className={`mt-3 text-base font-semibold ${text}`}>{label}</p>
       <p className="mt-1 text-sm text-white-muted">Brief quality score</p>
     </div>
+  )
+}
+
+const STATUS_COLORS: Record<DimensionScore['status'], { text: string; bg: string; label: string }> = {
+  missing: { text: 'text-red-500', bg: 'bg-red-500', label: 'Missing' },
+  thin: { text: 'text-orange-accent', bg: 'bg-orange-accent', label: 'Thin' },
+  adequate: { text: 'text-yellow-electric', bg: 'bg-yellow-electric', label: 'Adequate' },
+  strong: { text: 'text-green-500', bg: 'bg-green-500', label: 'Strong' },
+}
+
+function ScoreBreakdownPanel({ breakdown }: { breakdown: ScoreBreakdown }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="mt-4 border border-border-subtle bg-black-card">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+      >
+        <span className="text-xs font-semibold uppercase tracking-wide text-white-muted">Score breakdown</span>
+        <svg className={`h-4 w-4 text-white-dim transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="border-t border-border-subtle px-4 py-4 space-y-3">
+          {breakdown.dimensions.map((dim) => {
+            const { text, bg, label } = STATUS_COLORS[dim.status]
+            const pct = (dim.score / dim.maxScore) * 100
+            return (
+              <div key={dim.dimension}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-white">{dim.dimension}</span>
+                  <span className={`text-xs font-semibold ${text}`}>{dim.score}/{dim.maxScore} {label}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-white-faint">
+                  <div className={`h-1.5 rounded-full ${bg} transition-all`} style={{ width: `${pct}%` }} />
+                </div>
+                <p className="mt-0.5 text-xs text-white-dim">{dim.evidence}</p>
+              </div>
+            )
+          })}
+          <div className="border-t border-border-subtle pt-3 grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-white-dim">Structure</p>
+              <p className="text-sm font-semibold text-white">{breakdown.structureScore}/10</p>
+            </div>
+            <div>
+              <p className="text-xs text-white-dim">Completeness</p>
+              <p className="text-sm font-semibold text-white">{breakdown.completenessScore}/10</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ScoreDelta({ current, previous }: { current: number; previous: number }) {
+  const delta = current - previous
+  if (delta === 0) return null
+  const isUp = delta > 0
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${isUp ? 'text-green-500' : 'text-red-500'}`}>
+      <svg className={`h-3 w-3 ${isUp ? '' : 'rotate-180'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+      </svg>
+      {isUp ? '+' : ''}{delta} points
+    </span>
+  )
+}
+
+function ClarifyingQuestionsSection({ questions }: { questions: string[] }) {
+  if (questions.length === 0) return null
+
+  const copyText = questions.map((q, i) => `${i + 1}. ${q}`).join('\n')
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center gap-3">
+        <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Questions to Sharpen Further</h2>
+        <CopyButton text={copyText} />
+      </div>
+      <div className="border border-border-strong bg-black-card p-5">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-orange-accent">
+          Answer these to improve your score
+        </p>
+        <ol className="space-y-2">
+          {questions.map((q, i) => (
+            <li key={i} className="flex gap-3 text-sm text-white leading-relaxed">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center border border-border-strong bg-black-deep text-xs font-bold text-orange-accent">{i + 1}</span>
+              {q}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
   )
 }
 
@@ -892,6 +1041,191 @@ function RewrittenBriefSection({ strategicAnalysis, extractedBrief, isPro, brief
   )
 }
 
+// ---------------------------------------------------------------------------
+// CLASSIC STANDARDS SECTION — how the brief scores against the masters
+// ---------------------------------------------------------------------------
+
+const CLASSIC_STATUS: Record<string, { color: string; bg: string }> = {
+  strong: { color: 'text-green-500', bg: 'bg-green-500' },
+  adequate: { color: 'text-yellow-electric', bg: 'bg-yellow-electric' },
+  weak: { color: 'text-orange-accent', bg: 'bg-orange-accent' },
+  missing: { color: 'text-red-500', bg: 'bg-red-500' },
+}
+
+function classicStatus(score: number, maxScore: number) {
+  const pct = score / maxScore
+  if (pct >= 0.8) return CLASSIC_STATUS.strong
+  if (pct >= 0.5) return CLASSIC_STATUS.adequate
+  if (pct > 0) return CLASSIC_STATUS.weak
+  return CLASSIC_STATUS.missing
+}
+
+function ClassicStandardsSection({ scores }: { scores: ClassicStandardScore[] }) {
+  const [open, setOpen] = useState(true)
+  const total = scores.reduce((s, c) => s + c.score, 0)
+  const max = scores.reduce((s, c) => s + c.maxScore, 0)
+  const pct = Math.round((total / max) * 100)
+
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="mb-4 flex w-full items-center justify-between text-left"
+      >
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Classic Standards</h2>
+          <span className="inline-flex items-center gap-1 border border-border-strong px-2 py-0.5 text-xs font-bold text-orange-accent">
+            {total}/{max}
+          </span>
+        </div>
+        <svg className={`h-4 w-4 text-white-dim transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="space-y-3">
+          <div className="border border-border-subtle bg-black-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-white-muted">Overall classic standard</span>
+              <span className={`text-xs font-bold ${pct >= 60 ? 'text-green-500' : pct >= 40 ? 'text-yellow-electric' : 'text-red-500'}`}>{pct}%</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-white-faint">
+              <div className={`h-2 rounded-full transition-all ${pct >= 60 ? 'bg-green-500' : pct >= 40 ? 'bg-yellow-electric' : 'bg-red-500'}`} style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+          {scores.map((cs) => {
+            const st = classicStatus(cs.score, cs.maxScore)
+            const barPct = (cs.score / cs.maxScore) * 100
+            return (
+              <div key={cs.standard} className="border border-border-subtle bg-black-card p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white">{cs.standard}</span>
+                    <span className="text-xs text-white-dim">({cs.master})</span>
+                  </div>
+                  <span className={`text-xs font-bold ${st.color}`}>{cs.score}/{cs.maxScore}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-white-faint mb-2">
+                  <div className={`h-1.5 rounded-full ${st.bg} transition-all`} style={{ width: `${barPct}%` }} />
+                </div>
+                <p className="text-xs text-white-muted">{cs.verdict}</p>
+                <p className="mt-1 text-xs text-orange-accent italic">{cs.advice}</p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// CLASSIC BENCHMARK SECTION — reference campaigns
+// ---------------------------------------------------------------------------
+
+function ClassicBenchmarkSection({ benchmarks }: { benchmarks: ClassicBriefRef[] }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center gap-3">
+        <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Classic Benchmarks</h2>
+        <span className="inline-flex items-center border border-border-strong px-2 py-0.5 text-xs font-semibold text-orange-accent">Reference</span>
+      </div>
+      <p className="mb-4 text-sm text-white-muted">Iconic campaigns that set the standard your brief is measured against.</p>
+      <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-3">
+        {benchmarks.map((b) => {
+          const isOpen = !!expanded[b.id]
+          return (
+            <div key={b.id} className={`border bg-black-card transition-colors ${isOpen ? 'border-orange-accent' : 'border-border-subtle'}`}>
+              <button
+                type="button"
+                onClick={() => setExpanded(prev => ({ ...prev, [b.id]: !prev[b.id] }))}
+                aria-expanded={isOpen}
+                className="flex w-full items-start justify-between gap-2 p-4 text-left"
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-orange-accent">{b.brand}</p>
+                  <p className="mt-0.5 text-sm font-semibold text-white">&ldquo;{b.campaign}&rdquo;</p>
+                  <p className="mt-0.5 text-xs text-white-dim">{b.agency}, {b.year}</p>
+                </div>
+                <svg className={`mt-1 h-4 w-4 flex-shrink-0 text-white-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isOpen && (
+                <div className="border-t border-border-subtle px-4 py-4 space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-white-dim">Proposition</p>
+                    <p className="mt-0.5 text-sm text-white leading-relaxed">&ldquo;{b.singleMindedProposition}&rdquo;</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-white-dim">Human Truth</p>
+                    <p className="mt-0.5 text-sm text-white leading-relaxed">{b.humanTruth}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-white-dim">Why It Worked</p>
+                    <p className="mt-0.5 text-sm text-white-muted leading-relaxed">{b.whyItWorked}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-white-dim">Brief Strength</p>
+                    <p className="mt-0.5 text-sm text-white-muted leading-relaxed">{b.briefStrength}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// MARKET INTELLIGENCE SECTION
+// ---------------------------------------------------------------------------
+
+const CATEGORY_COLORS: Record<string, { text: string; border: string }> = {
+  audience: { text: 'text-blue-400', border: 'border-l-blue-400' },
+  competitive: { text: 'text-red-400', border: 'border-l-red-400' },
+  channel: { text: 'text-green-400', border: 'border-l-green-400' },
+  benchmark: { text: 'text-yellow-electric', border: 'border-l-yellow-electric' },
+  trend: { text: 'text-purple-400', border: 'border-l-purple-400' },
+}
+
+function MarketIntelligenceSection({ insights }: { insights: MarketInsightData[] }) {
+  const copyText = insights.map(i => `[${i.category.toUpperCase()}] ${i.insight} — ${i.source}`).join('\n')
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center gap-3">
+        <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Market Intelligence</h2>
+        <CopyButton text={copyText} />
+      </div>
+      <p className="mb-4 text-sm text-white-muted">Industry data and benchmarks to strengthen your brief decisions.</p>
+      <div className="space-y-3">
+        {insights.map((insight, i) => {
+          const cat = CATEGORY_COLORS[insight.category] ?? CATEGORY_COLORS.benchmark
+          return (
+            <div key={i} className={`border border-border-subtle bg-black-card p-4 border-l-4 ${cat.border}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`text-xs font-bold uppercase tracking-wide ${cat.text}`}>{insight.category}</span>
+                {insight.relevance === 'high' && (
+                  <span className="text-xs font-semibold text-white-dim bg-white-faint px-1.5 py-0.5">Key</span>
+                )}
+              </div>
+              <p className="text-sm text-white leading-relaxed">{insight.insight}</p>
+              <p className="mt-1 text-xs text-white-dim italic">{insight.source}</p>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function buildFullMarkdown(data: BriefAnalysisData): string {
   const { score, extractedBrief, strategicAnalysis, gaps } = data
   const sections: string[] = []
@@ -1244,7 +1578,7 @@ function UpgradeCtaCard() {
   )
 }
 
-export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isFirstAnalysis }: BriefAnalysisProps) {
+export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isFirstAnalysis, previousScore }: BriefAnalysisProps) {
   const { score, extractedBrief, strategicAnalysis, gaps } = data
 
   return (
@@ -1252,7 +1586,15 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isF
       <div className="flex items-end justify-between gap-4">
         <div className="flex-1">
           <ScoreCircle score={score} showCelebration={isFirstAnalysis} />
+          {previousScore != null && previousScore !== score && (
+            <div className="mt-2 flex justify-center">
+              <ScoreDelta current={score} previous={previousScore} />
+            </div>
+          )}
           <BriefMetadataBar data={data} />
+          {data.scoreBreakdown && (
+            <ScoreBreakdownPanel breakdown={data.scoreBreakdown} />
+          )}
         </div>
         <div className="flex flex-col items-end gap-2 pb-2">
           <CopyAllButton data={data} />
@@ -1266,6 +1608,11 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isF
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 150ms both' }}>
         <GapAnalysisSection gaps={gaps} strategicAnalysis={strategicAnalysis} />
       </div>
+      {data.clarifyingQuestions && data.clarifyingQuestions.length > 0 && (
+        <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 200ms both' }}>
+          <ClarifyingQuestionsSection questions={data.clarifyingQuestions} />
+        </div>
+      )}
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 250ms both' }}>
         <StrategicAnalysisSection strategicAnalysis={strategicAnalysis} />
       </div>
@@ -1275,8 +1622,23 @@ export default function BriefAnalysis({ data, previewUrl, isPro, isPaidUser, isF
       <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 350ms both' }}>
         <StrategicTensionsSection strategicAnalysis={strategicAnalysis} />
       </div>
+      {data.classicScores && data.classicScores.length > 0 && (
+        <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 380ms both' }}>
+          <ClassicStandardsSection scores={data.classicScores} />
+        </div>
+      )}
+      {data.marketInsights && data.marketInsights.length > 0 && (
+        <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 410ms both' }}>
+          <MarketIntelligenceSection insights={data.marketInsights} />
+        </div>
+      )}
+      {data.classicBenchmarks && data.classicBenchmarks.length > 0 && (
+        <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 440ms both' }}>
+          <ClassicBenchmarkSection benchmarks={data.classicBenchmarks} />
+        </div>
+      )}
       {isPro === false && <PhantomLockedSection />}
-      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 450ms both' }}>
+      <div style={{ animation: 'aidenFadeInUp 0.5s ease-out 470ms both' }}>
         <RewrittenBriefSection strategicAnalysis={strategicAnalysis} extractedBrief={extractedBrief} isPro={isPro} briefText={data.briefText} rewrittenBriefFromAPI={data.rewrittenBrief} />
       </div>
       <TeamHandoffPanel data={data} previewUrl={previewUrl} />

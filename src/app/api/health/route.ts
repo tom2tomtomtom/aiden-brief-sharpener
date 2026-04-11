@@ -14,9 +14,22 @@ async function checkSupabase(): Promise<'ok' | 'error'> {
   }
 }
 
-function checkAnthropic(): 'configured' | 'missing' {
-  const key = process.env.ANTHROPIC_API_KEY
-  return key && key.startsWith('sk-ant') ? 'configured' : 'missing'
+async function checkAidenApi(): Promise<'ok' | 'error' | 'missing'> {
+  const key = process.env.AIDEN_API_KEY
+  if (!key) return 'missing'
+  const base = process.env.AIDEN_API_URL ?? 'https://aiden-api-production.up.railway.app'
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    const res = await fetch(`${base}/api/v1/health`, {
+      headers: { 'X-API-Key': key },
+      signal: controller.signal,
+    })
+    clearTimeout(timeout)
+    return res.ok ? 'ok' : 'error'
+  } catch {
+    return 'error'
+  }
 }
 
 function checkStripe(): 'configured' | 'missing' {
@@ -25,17 +38,17 @@ function checkStripe(): 'configured' | 'missing' {
 }
 
 export async function GET() {
-  const [supabase, anthropic, stripe] = await Promise.all([
+  const [supabase, aidenApi, stripe] = await Promise.all([
     checkSupabase(),
-    Promise.resolve(checkAnthropic()),
+    checkAidenApi(),
     Promise.resolve(checkStripe()),
   ])
 
-  const services = { supabase, anthropic, stripe }
-  const degraded = supabase === 'error' || anthropic === 'missing' || stripe === 'missing'
+  const services = { supabase, aidenApi, stripe }
+  const degraded = supabase === 'error' || aidenApi === 'error' || aidenApi === 'missing' || stripe === 'missing'
 
   return NextResponse.json(
-    { status: degraded ? 'degraded' : 'ok', services },
+    { status: degraded ? 'degraded' : 'ok', services, timestamp: new Date().toISOString() },
     { status: degraded ? 503 : 200 }
   )
 }

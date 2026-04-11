@@ -372,6 +372,25 @@ export default function LandingPageForm({ onGenerate, isLoading, error, onFormCh
   }
 
   async function handleFileUpload(file: File) {
+    const MAX_CLIENT_SIZE = 10 * 1024 * 1024 // 10MB
+    if (file.size > MAX_CLIENT_SIZE) {
+      setUploadState('error')
+      setUploadError(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 10MB.`)
+      setUploadFileName(file.name)
+      showToast(`File too large. Maximum is 10MB.`, 'error')
+      return
+    }
+
+    const validExtensions = ['.pdf', '.docx', '.doc', '.txt', '.md']
+    const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
+    if (!validExtensions.includes(ext)) {
+      setUploadState('error')
+      setUploadError(`Unsupported file type "${ext}". Upload PDF, Word, or text files.`)
+      setUploadFileName(file.name)
+      showToast(`Unsupported file type.`, 'error')
+      return
+    }
+
     setUploadState('parsing')
     setUploadError(null)
     setUploadFileName(file.name)

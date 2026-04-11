@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { canGenerate, incrementUsage, getUserPlan } from '@/lib/usage'
 import { checkGuestMonthlyLimit, checkRateLimit, incrementGuestMonthlyUsage } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
+import { getClassicPrinciplesPrompt, scoreAgainstClassics, findRelevantClassics } from '@/lib/classic-briefs'
+import { enrichWithMarketInsights, formatInsightsForPrompt } from '@/lib/market-enrichment'
 
 const AIDEN_API_BASE = process.env.AIDEN_API_URL ?? 'https://aiden-api-production.up.railway.app'
 const AIDEN_API_KEY = process.env.AIDEN_API_KEY ?? ''
@@ -86,20 +89,39 @@ function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
 }
 
-function scoreField(text: string | null): number {
-  if (text === null) return 0
-  const words = wordCount(text)
-  if (words < 3) return 3
-  if (words < 10) return 3
-  if (words < 30) return 6
-  return 10
+interface DimensionScore {
+  dimension: string
+  score: number
+  maxScore: number
+  status: 'missing' | 'thin' | 'adequate' | 'strong'
+  evidence: string
 }
 
-function calculateBriefScore(briefText: string, extractedBrief: Record<string, unknown>): number {
+function scoreField(text: string | null): { score: number; status: DimensionScore['status']; evidence: string } {
+  if (text === null) return { score: 0, status: 'missing', evidence: 'Not found in brief' }
+  const words = wordCount(text)
+  if (words < 3) return { score: 3, status: 'thin', evidence: `Only ${words} word${words === 1 ? '' : 's'} — needs real detail` }
+  if (words < 10) return { score: 3, status: 'thin', evidence: `${words} words — present but underspecified` }
+  if (words < 30) return { score: 6, status: 'adequate', evidence: `${words} words — covers basics` }
+  return { score: 10, status: 'strong', evidence: `${words} words — well defined` }
+}
+
+interface ScoreBreakdown {
+  total: number
+  dimensions: DimensionScore[]
+  structureScore: number
+  completenessScore: number
+}
+
+function calculateBriefScore(briefText: string, extractedBrief: Record<string, unknown>): ScoreBreakdown {
+  const dimensions: DimensionScore[] = []
   let fieldScore = 0
-  for (const { aliases } of BRIEF_CHECKS) {
+
+  for (const { aliases, label } of BRIEF_CHECKS) {
     const value = getFieldValue(extractedBrief, aliases)
-    fieldScore += scoreField(value)
+    const { score, status, evidence } = scoreField(value)
+    fieldScore += score
+    dimensions.push({ dimension: label, score, maxScore: 10, status, evidence })
   }
 
   const lines = briefText.split('\n').filter(l => l.trim().length > 0)
@@ -108,7 +130,9 @@ function calculateBriefScore(briefText: string, extractedBrief: Record<string, u
   const presentCount = BRIEF_CHECKS.filter(({ aliases }) => getFieldValue(extractedBrief, aliases) !== null).length
   const completenessScore = Math.round((presentCount / BRIEF_CHECKS.length) * 10)
 
-  return Math.round(Math.min(fieldScore + structureScore + completenessScore, 100))
+  const total = Math.round(Math.min(fieldScore + structureScore + completenessScore, 100))
+
+  return { total, dimensions, structureScore, completenessScore }
 }
 
 function identifyGaps(extractedBrief: Record<string, unknown>): string[] {
@@ -122,6 +146,44 @@ function identifyGaps(extractedBrief: Record<string, unknown>): string[] {
     }
   }
   return gaps
+}
+
+function generateClarifyingQuestions(gaps: string[], extractedBrief: Record<string, unknown>): string[] {
+  const questions: string[] = []
+  const gapMap: Record<string, string> = {
+    'objective': 'What specific business outcome should this campaign achieve, and how will you measure it?',
+    'goal': 'What specific business outcome should this campaign achieve, and how will you measure it?',
+    'target audience': 'Who exactly are you trying to reach — what defines them beyond demographics (behaviours, mindset, tensions)?',
+    'audience': 'Who exactly are you trying to reach — what defines them beyond demographics (behaviours, mindset, tensions)?',
+    'deliverable': 'What specific assets do you need (formats, dimensions, quantities)?',
+    'budget': 'What is the production budget range? Even "high / medium / low" helps scope creative ambition.',
+    'timeline': 'What are the key milestones — brief date, creative review, final approval, live date?',
+    'kpi': 'How will you know this worked? What are the primary and secondary success metrics?',
+    'metric': 'How will you know this worked? What are the primary and secondary success metrics?',
+    'tone': 'Describe the tone in 3 adjectives and one contrast ("X but never Y").',
+    'brand': 'What brand context should creatives know — positioning, recent campaigns, things to avoid?',
+  }
+
+  for (const gap of gaps) {
+    const lower = gap.toLowerCase()
+    for (const [keyword, question] of Object.entries(gapMap)) {
+      if (lower.includes(keyword) && !questions.includes(question)) {
+        questions.push(question)
+        break
+      }
+    }
+  }
+
+  if (questions.length === 0 && gaps.length > 0) {
+    questions.push('What is the single most important thing this campaign must achieve?')
+  }
+
+  const hasInsight = !!(extractedBrief.insight ?? extractedBrief.human_truth ?? extractedBrief.tension)
+  if (!hasInsight) {
+    questions.push('What human truth or cultural tension should the creative be built on?')
+  }
+
+  return questions.slice(0, 7)
 }
 
 export async function POST(request: NextRequest) {
@@ -205,6 +267,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const startTime = Date.now()
+
   try {
     // Step 1: Extract structured brief via AIDEN API (Haiku - fast)
     const extractResult = await callAidenAPI<{ success: boolean; data: Record<string, unknown> }>('/extract-brief', {
@@ -216,11 +280,25 @@ export async function POST(request: NextRequest) {
     const extractedBrief = (extractResult.data?.content ?? extractResult.data ?? extractResult) as Record<string, unknown>
 
     // Step 2: Score + identify gaps (local - no AI needed)
-    const score = calculateBriefScore(briefText, extractedBrief)
+    const scoreBreakdown = calculateBriefScore(briefText, extractedBrief)
+    const score = scoreBreakdown.total
     const gaps = identifyGaps(extractedBrief)
+    const clarifyingQuestions = generateClarifyingQuestions(gaps, extractedBrief)
+
+    // Step 2b: Classic benchmark scoring + market enrichment (local - no AI needed)
+    const classicScores = scoreAgainstClassics(extractedBrief, gaps, briefText)
+    const classicBenchmarks = findRelevantClassics(industry, extractedBrief, briefText)
+    const marketInsights = enrichWithMarketInsights(industry, extractedBrief, briefText)
+
+    const classicPrinciplesBlock = getClassicPrinciplesPrompt()
+    const marketInsightsBlock = formatInsightsForPrompt(marketInsights)
+
+    const benchmarkContext = classicBenchmarks.length > 0
+      ? `\nCLASSIC BRIEF BENCHMARKS (reference these when making your analysis richer):
+${classicBenchmarks.map(b => `• ${b.brand} "${b.campaign}" (${b.agency}, ${b.year}) — Proposition: "${b.singleMindedProposition}" — Human truth: "${b.humanTruth}" — Why it worked: ${b.whyItWorked}`).join('\n')}`
+      : ''
 
     // Step 3: Brain analysis + rewrite in ONE call (Opus + phantom system)
-    // Same pattern as Studio V2's BriefStep - Brain returns analysis AND rewritten brief
     const brainMessage = `I've just parsed this campaign brief. Here's what I extracted:
 
 Campaign: ${extractedBrief.campaign_name || 'Unknown'}
@@ -235,11 +313,19 @@ Timeline: ${extractedBrief.timeline || extractedBrief.timing || 'Not specified'}
 Gaps identified: ${gaps.length > 0 ? gaps.join(', ') : 'None'}
 Brief quality score: ${score}/100
 
+${classicPrinciplesBlock}
+${benchmarkContext}
+${marketInsightsBlock}
+
 Please provide two things:
 
 ## STRATEGIC ANALYSIS & RECOMMENDATIONS
 
-Give me your honest creative director take on this brief. What's the idea here? Is it strong enough? What would you push harder on? Where's the missed opportunity? What tensions or insights could the work be built on? Be conclusive and actionable in your recommendations.
+Give me your honest creative director take on this brief — informed by the classic advertising standards above. Judge it against the masters: Does it have a Bernbach-grade human truth? An Ogilvy-sharp proposition? A Hegarty-worthy tension? Where would Trott say it fails to get noticed? Be specific about which standards it meets and which it doesn't.
+
+Also cite any relevant market intelligence where it strengthens your point. If benchmark data suggests the brief is overlooking a channel or audience reality, say so.
+
+Be conclusive and actionable. This is your definitive take.
 
 ## AIDEN'S VERSION OF THE BRIEF
 
@@ -297,7 +383,7 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
         .insert({
           user_id: user.id,
           input_data: { briefText, brandName, industry, briefType },
-          output_copy: { extractedBrief, strategicAnalysis, gaps, score, rewrittenBrief },
+          output_copy: { extractedBrief, strategicAnalysis, gaps, score, scoreBreakdown, rewrittenBrief, clarifyingQuestions, classicScores, classicBenchmarks, marketInsights },
         })
         .select('id')
         .single()
@@ -306,12 +392,26 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
       await incrementGuestMonthlyUsage(guestIdentifier)
     }
 
+    logger.info('analysis.complete', {
+      userId: user?.id ?? 'guest',
+      score,
+      gapCount: gaps.length,
+      questionCount: clarifyingQuestions.length,
+      durationMs: Date.now() - startTime,
+      generationId,
+    })
+
     const response = NextResponse.json({
       extractedBrief,
       strategicAnalysis,
       gaps,
       score,
+      scoreBreakdown,
       rewrittenBrief,
+      clarifyingQuestions,
+      classicScores,
+      classicBenchmarks,
+      marketInsights,
       generationId,
     })
     if (guestIdentity) {
@@ -336,7 +436,11 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
         return NextResponse.json({ error: error.message }, { status: 502 })
       }
     }
-    console.error('Analysis error:', error)
+    logger.error('analysis.failed', {
+      error: error instanceof Error ? error.message : String(error),
+      durationMs: Date.now() - startTime,
+      userId: user?.id ?? 'guest',
+    })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
