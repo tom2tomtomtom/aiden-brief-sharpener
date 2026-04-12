@@ -330,8 +330,8 @@ export async function POST(request: NextRequest) {
     const marketInsightsBlock = formatInsightsForPrompt(marketInsights)
 
     const benchmarkContext = classicBenchmarks.length > 0
-      ? `\nCLASSIC BRIEF BENCHMARKS (reference these when making your analysis richer):
-${classicBenchmarks.map(b => `• ${b.brand} "${b.campaign}" (${b.agency}, ${b.year}) — Proposition: "${b.singleMindedProposition}" — Human truth: "${b.humanTruth}" — Why it worked: ${b.whyItWorked}`).join('\n')}`
+      ? `\nBRIEF BENCHMARKS (reference these when making your analysis richer):
+${classicBenchmarks.map(b => `• ${b.brand} "${b.campaign}" (${b.year}) — Proposition: "${b.singleMindedProposition}" — Human truth: "${b.humanTruth}" — Why it worked: ${b.whyItWorked}`).join('\n')}`
       : ''
 
     // Step 3: Brain analysis + rewrite in ONE call (Opus + phantom system)
@@ -357,7 +357,7 @@ Please provide two things:
 
 ## STRATEGIC ANALYSIS & RECOMMENDATIONS
 
-Give me your honest creative director take on this brief — informed by the classic advertising standards above. Judge it against the masters: Does it have a Bernbach-grade human truth? An Ogilvy-sharp proposition? A Hegarty-worthy tension? Where would Trott say it fails to get noticed? Be specific about which standards it meets and which it doesn't.
+Give me your honest creative director take on this brief — informed by the strategic standards above. Judge it against each framework: Does it have a genuine human truth? A research-led proposition? A creative tension worth exploiting? Does it address how the work will break through indifference? Be specific about which standards it meets and which it doesn't.
 
 Also cite any relevant market intelligence where it strengthens your point. If benchmark data suggests the brief is overlooking a channel or audience reality, say so.
 

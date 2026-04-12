@@ -1042,7 +1042,7 @@ function RewrittenBriefSection({ strategicAnalysis, extractedBrief, isPro, brief
 }
 
 // ---------------------------------------------------------------------------
-// CLASSIC STANDARDS SECTION — how the brief scores against the masters
+// STRATEGIC STANDARDS SECTION — how the brief scores against 7 frameworks
 // ---------------------------------------------------------------------------
 
 const CLASSIC_STATUS: Record<string, { color: string; bg: string }> = {
@@ -1075,7 +1075,7 @@ function ClassicStandardsSection({ scores }: { scores: ClassicStandardScore[] })
         className="mb-4 flex w-full items-center justify-between text-left"
       >
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Classic Standards</h2>
+          <h2 className="text-lg font-semibold uppercase tracking-wider text-white">Strategic Standards</h2>
           <span className="inline-flex items-center gap-1 border border-border-strong px-2 py-0.5 text-xs font-bold text-orange-accent">
             {total}/{max}
           </span>
@@ -1103,7 +1103,6 @@ function ClassicStandardsSection({ scores }: { scores: ClassicStandardScore[] })
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-white">{cs.standard}</span>
-                    <span className="text-xs text-white-dim">({cs.master})</span>
                   </div>
                   <span className={`text-xs font-bold ${st.color}`}>{cs.score}/{cs.maxScore}</span>
                 </div>
@@ -1149,7 +1148,7 @@ function ClassicBenchmarkSection({ benchmarks }: { benchmarks: ClassicBriefRef[]
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-orange-accent">{b.brand}</p>
                   <p className="mt-0.5 text-sm font-semibold text-white">&ldquo;{b.campaign}&rdquo;</p>
-                  <p className="mt-0.5 text-xs text-white-dim">{b.agency}, {b.year}</p>
+                  <p className="mt-0.5 text-xs text-white-dim">{b.year}</p>
                 </div>
                 <svg className={`mt-1 h-4 w-4 flex-shrink-0 text-white-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />

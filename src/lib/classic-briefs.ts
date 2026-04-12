@@ -1,13 +1,12 @@
 /**
  * Classic advertising brief principles and benchmark library.
  *
- * Sources: Ogilvy on Advertising, Bernbach's collected works, Hegarty on Advertising,
- * Dave Trott's Creative Mischief & One Plus One Equals Three, Mary Wells Lawrence's
- * A Big Life in Advertising, and modern strategic planning best practice.
+ * Seven strategic frameworks distilled from decades of creative effectiveness
+ * research and campaign post-mortem analysis.
  */
 
 // ---------------------------------------------------------------------------
-// 1. THE MASTERS — distilled principles for prompt injection
+// 1. STRATEGIC FRAMEWORKS — distilled principles for prompt injection
 // ---------------------------------------------------------------------------
 
 export interface MasterPrinciple {
@@ -19,55 +18,54 @@ export interface MasterPrinciple {
 
 export const MASTER_PRINCIPLES: MasterPrinciple[] = [
   {
-    master: 'David Ogilvy',
-    era: '1960s–1980s',
+    master: 'Research-Led Proposition',
+    era: 'Core framework',
     principle: 'Every brief must contain one big idea rooted in consumer research. If the ad doesn\'t sell, it isn\'t creative. The brief should make one promise — and prove it.',
     briefTest: 'Does this brief contain a single, provable consumer promise?',
   },
   {
-    master: 'Bill Bernbach',
-    era: '1960s–1970s',
+    master: 'Human Truth',
+    era: 'Core framework',
     principle: 'Find the simple human truth that makes the product relevant to real life. Execution IS the idea — the brief must leave room for surprise. Rules are what the artist breaks.',
     briefTest: 'Is there a human truth here that could move someone emotionally?',
   },
   {
-    master: 'John Hegarty',
-    era: '1980s–2010s',
+    master: 'Creative Tension',
+    era: 'Core framework',
     principle: 'Turn intelligence into magic. The brief must identify a genuine tension — between how things are and how they could be. Don\'t tell creatives what to make; tell them what to believe.',
     briefTest: 'Does this brief name a specific tension the creative can exploit?',
   },
   {
-    master: 'Dave Trott',
-    era: '1980s–present',
+    master: 'Impact First',
+    era: 'Core framework',
     principle: 'Impact first, then communication, then persuasion. Most advertising fails because it never gets noticed. The brief must define what makes this impossible to ignore before worrying about what it says.',
     briefTest: 'Does this brief address how the work will break through indifference?',
   },
   {
-    master: 'Mary Wells Lawrence',
-    era: '1960s–1990s',
+    master: 'Cultural Ambition',
+    era: 'Core framework',
     principle: 'The best campaigns don\'t just advertise — they change culture. A brief should aim to redefine the brand\'s entire relationship with its audience, not just run an ad.',
     briefTest: 'Is this brief ambitious enough to change something in culture, or is it just filling a media plan?',
   },
   {
-    master: 'Rosser Reeves',
-    era: '1950s–1960s',
+    master: 'USP Clarity',
+    era: 'Core framework',
     principle: 'Every ad must make a Unique Selling Proposition. One claim. One benefit. Repeated relentlessly. The brief must identify what the product does that nothing else does.',
     briefTest: 'Can you state the USP in one sentence that a competitor cannot also claim?',
   },
   {
-    master: 'Jon Steel',
-    era: '1990s–present',
+    master: 'Audience Empathy',
+    era: 'Core framework',
     principle: 'The planner\'s job is to be the voice of the consumer in the room. The brief must demonstrate that someone has genuinely listened to the audience — not just profiled them.',
     briefTest: 'Does this brief show evidence of actually understanding how the audience thinks and feels?',
   },
 ]
 
-// The prompt-ready version of all principles, formatted for the Brain
 export function getClassicPrinciplesPrompt(): string {
   const lines = MASTER_PRINCIPLES.map(p =>
     `• ${p.master}: "${p.principle}" — Test: ${p.briefTest}`
   )
-  return `CLASSIC CREATIVE STANDARDS (judge the brief against these):
+  return `STRATEGIC BRIEF STANDARDS (judge the brief against these 7 frameworks):
 ${lines.join('\n')}`
 }
 
@@ -209,13 +207,13 @@ export function scoreAgainstClassics(
   const lower = briefText.toLowerCase()
   const gapLower = gaps.map(g => g.toLowerCase()).join(' ')
 
-  // 1. Ogilvy: Single provable promise
+  // 1. Single provable promise
   const hasObjective = !gapLower.includes('objective') && !gapLower.includes('goal')
   const objectiveWords = String(extractedBrief.objectives ?? extractedBrief.objective ?? '').split(/\s+/).length
   const singleProposition = hasObjective && objectiveWords > 5 && objectiveWords < 80
   scores.push({
     standard: 'Single Provable Promise',
-    master: 'Ogilvy',
+    master: 'Research-Led Proposition',
     score: singleProposition ? 4 : hasObjective ? 2 : 0,
     maxScore: 5,
     verdict: singleProposition ? 'Brief has a focused proposition' : hasObjective ? 'Objectives exist but may lack focus' : 'No clear proposition found',
@@ -224,13 +222,13 @@ export function scoreAgainstClassics(
       : 'State the one promise this campaign makes. "We want to [verb] among [audience] because [proof]."',
   })
 
-  // 2. Bernbach: Human truth
+  // 2. Human truth
   const truthKeywords = ['truth', 'insight', 'tension', 'feel', 'believe', 'fear', 'aspir', 'struggle', 'guilt', 'pride', 'belonging']
   const hasTruth = truthKeywords.some(kw => lower.includes(kw))
   const hasTension = !!(extractedBrief.tension ?? extractedBrief.insight ?? extractedBrief.human_truth)
   scores.push({
     standard: 'Human Truth',
-    master: 'Bernbach',
+    master: 'Human Truth',
     score: hasTension ? 5 : hasTruth ? 3 : 1,
     maxScore: 5,
     verdict: hasTension ? 'An explicit human truth or tension is stated' : hasTruth ? 'Emotional language present but no named truth' : 'Brief is functional — no emotional ground',
@@ -239,12 +237,12 @@ export function scoreAgainstClassics(
       : 'Name the one thing people feel about this category that nobody is addressing. That\'s your truth.',
   })
 
-  // 3. Hegarty: Named tension
+  // 3. Creative tension
   const tensionWords = ['tension', 'conflict', 'paradox', 'contradiction', 'versus', ' vs ', 'but ', 'however', 'yet ']
   const hasTensionLanguage = tensionWords.some(tw => lower.includes(tw))
   scores.push({
     standard: 'Creative Tension',
-    master: 'Hegarty',
+    master: 'Creative Tension',
     score: hasTensionLanguage ? 4 : 1,
     maxScore: 5,
     verdict: hasTensionLanguage ? 'The brief contains tension language creatives can exploit' : 'No clear tension — brief reads as a statement, not a provocation',
@@ -253,12 +251,12 @@ export function scoreAgainstClassics(
       : 'Where\'s the "but"? The gap between how things are and how they could be is where great ideas live.',
   })
 
-  // 4. Trott: Standout / impact thinking
+  // 4. Standout / impact thinking
   const impactWords = ['attention', 'standout', 'disrupt', 'break through', 'cut through', 'notice', 'impossible to ignore', 'fame', 'pr hook', 'earned']
   const hasImpactThinking = impactWords.some(iw => lower.includes(iw))
   scores.push({
     standard: 'Impact First',
-    master: 'Trott',
+    master: 'Impact First',
     score: hasImpactThinking ? 4 : 1,
     maxScore: 5,
     verdict: hasImpactThinking ? 'Brief considers how the work will get noticed' : 'Brief assumes the work will be seen — dangerous in a cluttered world',
@@ -267,12 +265,12 @@ export function scoreAgainstClassics(
       : 'Add one line about how this work breaks through indifference. If nobody sees it, nothing else matters.',
   })
 
-  // 5. Wells Lawrence: Cultural ambition
+  // 5. Cultural ambition
   const cultureWords = ['cultur', 'movement', 'redefine', 'change', 'transform', 'shift', 'conversation', 'zeitgeist', 'social', 'community']
   const hasCulturalAmbition = cultureWords.some(cw => lower.includes(cw))
   scores.push({
     standard: 'Cultural Ambition',
-    master: 'Wells Lawrence',
+    master: 'Cultural Ambition',
     score: hasCulturalAmbition ? 4 : 1,
     maxScore: 5,
     verdict: hasCulturalAmbition ? 'Brief aims to create cultural impact, not just advertising' : 'Brief is advertising-shaped — it won\'t create conversation',
@@ -281,12 +279,12 @@ export function scoreAgainstClassics(
       : 'What would make people talk about this without being asked? That\'s the brief\'s missing layer.',
   })
 
-  // 6. Reeves: USP clarity
+  // 6. USP clarity
   const hasUSP = !!(extractedBrief.key_message ?? extractedBrief.usp ?? extractedBrief.proposition)
   const toneExists = !gapLower.includes('tone')
   scores.push({
     standard: 'USP Clarity',
-    master: 'Reeves',
+    master: 'USP Clarity',
     score: hasUSP ? 5 : toneExists ? 2 : 0,
     maxScore: 5,
     verdict: hasUSP ? 'A clear unique selling proposition is stated' : 'No explicit USP — the brief could apply to any competitor',
@@ -295,13 +293,13 @@ export function scoreAgainstClassics(
       : 'Complete: "Only [brand] can [claim] because [reason]." That\'s your USP.',
   })
 
-  // 7. Steel: Audience empathy
+  // 7. Audience empathy
   const audienceDetail = String(extractedBrief.target_audience ?? extractedBrief.audience ?? '')
   const hasMindsetsOrBehaviours = /mindset|behavio|attitude|feel|think|worry|struggle|aspir|lifestyle/i.test(audienceDetail)
   const hasDemographicsOnly = /\d{2}[-–]\d{2}|male|female|abc1|income/i.test(audienceDetail) && !hasMindsetsOrBehaviours
   scores.push({
     standard: 'Audience Empathy',
-    master: 'Steel',
+    master: 'Audience Empathy',
     score: hasMindsetsOrBehaviours ? 5 : hasDemographicsOnly ? 2 : audienceDetail.length > 10 ? 1 : 0,
     maxScore: 5,
     verdict: hasMindsetsOrBehaviours
