@@ -5,8 +5,8 @@ async function checkSupabase(): Promise<'ok' | 'error'> {
   try {
     const supabase = createAdminClient()
     const { error } = await supabase
-      .from('usage_tracking')
-      .select('count', { count: 'exact', head: true })
+      .from('generations')
+      .select('id', { count: 'exact', head: true })
       .limit(1)
     return error ? 'error' : 'ok'
   } catch {
@@ -32,20 +32,20 @@ async function checkAidenApi(): Promise<'ok' | 'error' | 'missing'> {
   }
 }
 
-function checkStripe(): 'configured' | 'missing' {
-  const key = process.env.STRIPE_SECRET_KEY
-  return key && key !== 'placeholder' && key.length > 10 ? 'configured' : 'missing'
+function checkGateway(): 'configured' | 'missing' {
+  const key = process.env.AIDEN_SERVICE_KEY
+  return key && key.length > 10 ? 'configured' : 'missing'
 }
 
 export async function GET() {
-  const [supabase, aidenApi, stripe] = await Promise.all([
+  const [supabase, aidenApi, gateway] = await Promise.all([
     checkSupabase(),
     checkAidenApi(),
-    Promise.resolve(checkStripe()),
+    Promise.resolve(checkGateway()),
   ])
 
-  const services = { supabase, aidenApi, stripe }
-  const degraded = supabase === 'error' || aidenApi === 'error' || aidenApi === 'missing' || stripe === 'missing'
+  const services = { supabase, aidenApi, gateway }
+  const degraded = supabase === 'error' || aidenApi === 'error' || aidenApi === 'missing' || gateway === 'missing'
 
   return NextResponse.json(
     { status: degraded ? 'degraded' : 'ok', services, timestamp: new Date().toISOString() },

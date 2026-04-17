@@ -3,15 +3,11 @@ const requiredVars = [
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
   'ANTHROPIC_API_KEY',
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_PRICE_ID_SINGLE',
-  'STRIPE_PRICE_ID_PRO',
-  'STRIPE_PRICE_ID_AGENCY',
   'AIDEN_API_KEY',
+  'AIDEN_SERVICE_KEY',
 ] as const
 
-const optionalVars = ['NEXT_PUBLIC_URL', 'AIDEN_BRAIN_API_URL', 'AIDEN_BRAIN_API_KEY', 'AIDEN_API_URL'] as const
+const optionalVars = ['NEXT_PUBLIC_URL', 'AIDEN_BRAIN_API_URL', 'AIDEN_BRAIN_API_KEY', 'AIDEN_API_URL', 'GATEWAY_URL'] as const
 
 type RequiredVars = (typeof requiredVars)[number]
 type OptionalVars = (typeof optionalVars)[number]
