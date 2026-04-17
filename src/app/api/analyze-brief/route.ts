@@ -301,38 +301,71 @@ export async function POST(request: NextRequest) {
   }
 
   const startTime = Date.now()
+  const encoder = new TextEncoder()
 
-  try {
-    // Step 1: Extract structured brief via AIDEN API (Haiku - fast)
-    const extractResult = await callAidenAPI<{ success: boolean; data: Record<string, unknown> }>('/extract-brief', {
-      brief_text: briefText,
-      ...(brandName && { brand_name: brandName }),
-      ...(industry && { industry }),
-      ...(briefType && { brief_type: briefType }),
-    })
-    const extractedBrief = (extractResult.data?.content ?? extractResult.data ?? extractResult) as Record<string, unknown>
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let closed = false
+      const send = (obj: Record<string, unknown>) => {
+        if (closed) return
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'))
+        } catch {
+          // swallow — stream may have been cancelled by the client
+        }
+      }
+      const closeStream = () => {
+        if (closed) return
+        closed = true
+        try {
+          controller.close()
+        } catch {
+          // already closed
+        }
+      }
 
-    // Step 2: Score + identify gaps (local - no AI needed)
-    const scoreBreakdown = calculateBriefScore(briefText, extractedBrief)
-    const score = scoreBreakdown.total
-    const gaps = identifyGaps(extractedBrief)
-    const clarifyingQuestions = generateClarifyingQuestions(gaps, extractedBrief)
+      // Heartbeat every 8s — keeps Railway/Cloudflare idle timers from dropping
+      // the long Opus call. 8s is well under any typical 30–60s proxy idle cutoff.
+      const heartbeat = setInterval(() => {
+        send({ type: 'heartbeat', ts: Date.now() })
+      }, 8000)
 
-    // Step 2b: Classic benchmark scoring + market enrichment (local - no AI needed)
-    const classicScores = scoreAgainstClassics(extractedBrief, gaps, briefText)
-    const classicBenchmarks = findRelevantClassics(industry, extractedBrief, briefText)
-    const marketInsights = enrichWithMarketInsights(industry, extractedBrief, briefText)
+      try {
+        send({ type: 'stage', stage: 'extracting', message: 'Reading your brief' })
 
-    const classicPrinciplesBlock = getClassicPrinciplesPrompt()
-    const marketInsightsBlock = formatInsightsForPrompt(marketInsights)
+        // Step 1: Extract structured brief via AIDEN API (Haiku - fast)
+        const extractResult = await callAidenAPI<{ success: boolean; data: Record<string, unknown> }>('/extract-brief', {
+          brief_text: briefText,
+          ...(brandName && { brand_name: brandName }),
+          ...(industry && { industry }),
+          ...(briefType && { brief_type: briefType }),
+        })
+        const extractedBrief = (extractResult.data?.content ?? extractResult.data ?? extractResult) as Record<string, unknown>
 
-    const benchmarkContext = classicBenchmarks.length > 0
-      ? `\nBRIEF BENCHMARKS (reference these when making your analysis richer):
+        // Step 2: Score + identify gaps (local - no AI needed)
+        const scoreBreakdown = calculateBriefScore(briefText, extractedBrief)
+        const score = scoreBreakdown.total
+        const gaps = identifyGaps(extractedBrief)
+        const clarifyingQuestions = generateClarifyingQuestions(gaps, extractedBrief)
+
+        // Step 2b: Classic benchmark scoring + market enrichment (local - no AI needed)
+        const classicScores = scoreAgainstClassics(extractedBrief, gaps, briefText)
+        const classicBenchmarks = findRelevantClassics(industry, extractedBrief, briefText)
+        const marketInsights = enrichWithMarketInsights(industry, extractedBrief, briefText)
+
+        const classicPrinciplesBlock = getClassicPrinciplesPrompt()
+        const marketInsightsBlock = formatInsightsForPrompt(marketInsights)
+
+        const benchmarkContext = classicBenchmarks.length > 0
+          ? `\nBRIEF BENCHMARKS (reference these when making your analysis richer):
 ${classicBenchmarks.map(b => `• ${b.brand} "${b.campaign}" (${b.year}) — Proposition: "${b.singleMindedProposition}" — Human truth: "${b.humanTruth}" — Why it worked: ${b.whyItWorked}`).join('\n')}`
-      : ''
+          : ''
 
-    // Step 3: Brain analysis + rewrite in ONE call (Opus + phantom system)
-    const brainMessage = `I've just parsed this campaign brief. Here's what I extracted:
+        send({ type: 'stage', stage: 'scoring', message: `Scored ${score}/100 · ${gaps.length} gap${gaps.length === 1 ? '' : 's'} flagged` })
+        send({ type: 'stage', stage: 'analyzing', message: 'Pressure-testing with the phantom system' })
+
+        // Step 3: Brain analysis + rewrite in ONE call (Opus + phantom system)
+        const brainMessage = `I've just parsed this campaign brief. Here's what I extracted:
 
 Campaign: ${extractedBrief.campaign_name || 'Unknown'}
 Objectives: ${Array.isArray(extractedBrief.objectives) ? (extractedBrief.objectives as string[]).join(', ') : extractedBrief.objectives || 'Not specified'}
@@ -366,139 +399,159 @@ Rewrite this brief as a cohesive narrative that captures the strategic intent, s
 
 IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS & RECOMMENDATIONS and ## AIDEN'S VERSION OF THE BRIEF). Write in conversational text, but be conclusive. This is your definitive take.`
 
-    const chatResult = await callAidenAPI<{ success: boolean; data: { content: string; metadata?: unknown } }>('/chat', {
-      message: brainMessage,
-      context: {
-        briefData: extractedBrief,
-      },
-    }, 300000) // 5 min timeout - Railway has no function time limit
+        const chatResult = await callAidenAPI<{ success: boolean; data: { content: string; metadata?: unknown } }>('/chat', {
+          message: brainMessage,
+          context: {
+            briefData: extractedBrief,
+          },
+        }, 300000) // 5 min timeout - Railway has no function time limit
 
-    const brainResponse = chatResult.data?.content ?? ''
+        const brainResponse = chatResult.data?.content ?? ''
 
-    // Parse Brain response into analysis and rewritten brief (same as Studio V2)
-    let strategicAnalysis: Record<string, unknown> = {}
-    let rewrittenBrief: string | null = null
+        send({ type: 'stage', stage: 'finalizing', message: 'Writing the sharper version of your brief' })
 
-    // Brain may use # or ## for headers, and AIDEN'S or AIDENS
-    const sections = brainResponse.split(/#{1,2}\s*AIDEN.S VERSION OF THE BRIEF/i)
-    if (sections.length === 2) {
-      const analysisSection = sections[0]
-        .replace(/#{1,2}\s*STRATEGIC ANALYSIS & RECOMMENDATIONS/i, '')
-        .trim()
-      const briefSection = sections[1].trim()
+        // Parse Brain response into analysis and rewritten brief (same as Studio V2)
+        let strategicAnalysis: Record<string, unknown> = {}
+        let rewrittenBrief: string | null = null
 
-      strategicAnalysis = {
-        aidenAnalysis: analysisSection,
-        rawResponse: brainResponse,
-      }
-      rewrittenBrief = briefSection
-    } else {
-      // Fallback: use entire response as analysis
-      strategicAnalysis = {
-        aidenAnalysis: brainResponse,
-        rawResponse: brainResponse,
-      }
-    }
+        // Brain may use # or ## for headers, and AIDEN'S or AIDENS
+        const sections = brainResponse.split(/#{1,2}\s*AIDEN.S VERSION OF THE BRIEF/i)
+        if (sections.length === 2) {
+          const analysisSection = sections[0]
+            .replace(/#{1,2}\s*STRATEGIC ANALYSIS & RECOMMENDATIONS/i, '')
+            .trim()
+          const briefSection = sections[1].trim()
 
-    // Include extraction-level analysis too
-    if (extractedBrief.aiden_analysis) {
-      strategicAnalysis.extractionAnalysis = extractedBrief.aiden_analysis
-    }
+          strategicAnalysis = {
+            aidenAnalysis: analysisSection,
+            rawResponse: brainResponse,
+          }
+          rewrittenBrief = briefSection
+        } else {
+          strategicAnalysis = {
+            aidenAnalysis: brainResponse,
+            rawResponse: brainResponse,
+          }
+        }
 
-    // Deduct tokens and save for authenticated users
-    let generationId: string | null = null
-    if (user) {
-      await deductTokens(user.id, 'analyze')
+        if (extractedBrief.aiden_analysis) {
+          strategicAnalysis.extractionAnalysis = extractedBrief.aiden_analysis
+        }
 
-      const { data } = await adminSupabase
-        .from('generations')
-        .insert({
-          user_id: user.id,
-          input_data: { briefText, brandName, industry, briefType },
-          output_copy: { extractedBrief, strategicAnalysis, gaps, score, scoreBreakdown, rewrittenBrief, clarifyingQuestions, classicScores, classicBenchmarks, marketInsights },
-        })
-        .select('id')
-        .single()
-      generationId = data?.id ?? null
-    } else if (guestIdentifier) {
-      await incrementGuestMonthlyUsage(guestIdentifier)
-      await incrementIpDailyUsage(ip)
-    }
+        // Deduct tokens and save for authenticated users
+        let generationId: string | null = null
+        if (user) {
+          await deductTokens(user.id, 'analyze')
 
-    const durationMs = Date.now() - startTime
-    const costEstimate = estimateCost(
-      briefText,
-      brainMessage,
-      JSON.stringify(extractResult),
-      brainResponse
-    )
+          const { data } = await adminSupabase
+            .from('generations')
+            .insert({
+              user_id: user.id,
+              input_data: { briefText, brandName, industry, briefType },
+              output_copy: { extractedBrief, strategicAnalysis, gaps, score, scoreBreakdown, rewrittenBrief, clarifyingQuestions, classicScores, classicBenchmarks, marketInsights },
+            })
+            .select('id')
+            .single()
+          generationId = data?.id ?? null
+        } else if (guestIdentifier) {
+          await incrementGuestMonthlyUsage(guestIdentifier)
+          await incrementIpDailyUsage(ip)
+        }
 
-    await recordCost(adminSupabase, {
-      user_tier: userTier,
-      user_id: user?.id ?? null,
-      extract_input_tokens: costEstimate.extractTokens.input,
-      extract_output_tokens: costEstimate.extractTokens.output,
-      chat_input_tokens: costEstimate.chatTokens.input,
-      chat_output_tokens: costEstimate.chatTokens.output,
-      extract_cost_usd: costEstimate.extractCost,
-      chat_cost_usd: costEstimate.chatCost,
-      total_cost_usd: costEstimate.totalCost,
-      brief_length: briefText.length,
-      response_length: brainResponse.length,
-      duration_ms: durationMs,
-    })
-
-    logger.info('analysis.complete', {
-      userId: user?.id ?? 'guest',
-      score,
-      gapCount: gaps.length,
-      questionCount: clarifyingQuestions.length,
-      durationMs,
-      generationId,
-      costUsd: costEstimate.totalCost.toFixed(4),
-      userTier,
-    })
-
-    const response = NextResponse.json({
-      extractedBrief,
-      strategicAnalysis,
-      gaps,
-      score,
-      scoreBreakdown,
-      rewrittenBrief,
-      clarifyingQuestions,
-      classicScores,
-      classicBenchmarks,
-      marketInsights,
-      generationId,
-    })
-    if (guestIdentity) {
-      response.cookies.set(GUEST_COOKIE_NAME, guestIdentity.id, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365,
-      })
-    }
-    return response
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        return NextResponse.json(
-          { error: 'Analysis is taking longer than expected. Please try again.' },
-          { status: 504 }
+        const durationMs = Date.now() - startTime
+        const costEstimate = estimateCost(
+          briefText,
+          brainMessage,
+          JSON.stringify(extractResult),
+          brainResponse
         )
+
+        await recordCost(adminSupabase, {
+          user_tier: userTier,
+          user_id: user?.id ?? null,
+          extract_input_tokens: costEstimate.extractTokens.input,
+          extract_output_tokens: costEstimate.extractTokens.output,
+          chat_input_tokens: costEstimate.chatTokens.input,
+          chat_output_tokens: costEstimate.chatTokens.output,
+          extract_cost_usd: costEstimate.extractCost,
+          chat_cost_usd: costEstimate.chatCost,
+          total_cost_usd: costEstimate.totalCost,
+          brief_length: briefText.length,
+          response_length: brainResponse.length,
+          duration_ms: durationMs,
+        })
+
+        logger.info('analysis.complete', {
+          userId: user?.id ?? 'guest',
+          score,
+          gapCount: gaps.length,
+          questionCount: clarifyingQuestions.length,
+          durationMs,
+          generationId,
+          costUsd: costEstimate.totalCost.toFixed(4),
+          userTier,
+        })
+
+        send({
+          type: 'result',
+          data: {
+            extractedBrief,
+            strategicAnalysis,
+            gaps,
+            score,
+            scoreBreakdown,
+            rewrittenBrief,
+            clarifyingQuestions,
+            classicScores,
+            classicBenchmarks,
+            marketInsights,
+            generationId,
+          },
+        })
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error))
+        logger.error('analysis.failed', {
+          error: err.message,
+          durationMs: Date.now() - startTime,
+          userId: user?.id ?? 'guest',
+        })
+        let code: string = 'INTERNAL_ERROR'
+        let message = 'Internal server error'
+        if (err.name === 'AbortError') {
+          code = 'TIMEOUT'
+          message = 'Analysis is taking longer than expected. Please try again.'
+        } else if (err.message.includes('AIDEN API') || err.message.includes('timed out')) {
+          code = 'UPSTREAM_ERROR'
+          message = err.message
+        }
+        send({ type: 'error', error: message, code })
+      } finally {
+        clearInterval(heartbeat)
+        closeStream()
       }
-      if (error.message.includes('AIDEN API') || error.message.includes('timed out')) {
-        return NextResponse.json({ error: error.message }, { status: 502 })
-      }
-    }
-    logger.error('analysis.failed', {
-      error: error instanceof Error ? error.message : String(error),
-      durationMs: Date.now() - startTime,
-      userId: user?.id ?? 'guest',
+    },
+    cancel() {
+      // Client disconnected — nothing to clean up since the interval is
+      // already cleared in the finally block above once start() unwinds.
+    },
+  })
+
+  const response = new NextResponse(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+      'Connection': 'keep-alive',
+    },
+  })
+  if (guestIdentity) {
+    response.cookies.set(GUEST_COOKIE_NAME, guestIdentity.id, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
     })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+  return response
 }

@@ -30,6 +30,12 @@ interface ApiErrorPayload {
   retryAfter?: string | number
 }
 
+type StreamMessage =
+  | { type: 'heartbeat'; ts?: number }
+  | { type: 'stage'; stage: string; message?: string }
+  | { type: 'result'; data: BriefAnalysisData & { generationId?: string | null } }
+  | { type: 'error'; error: string; code?: string }
+
 async function parseApiError(response: Response): Promise<ApiErrorPayload> {
   const contentType = response.headers.get('content-type') ?? ''
   if (contentType.includes('application/json')) {
@@ -65,6 +71,7 @@ function GeneratePageInner() {
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [mobileResultsCollapsed, setMobileResultsCollapsed] = useState(false)
   const [previousScore, setPreviousScore] = useState<number | null>(null)
+  const [progressStage, setProgressStage] = useState<string | null>(null)
   const emailModalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const formPanelRef = useRef<HTMLDivElement>(null)
 
@@ -156,9 +163,10 @@ function GeneratePageInner() {
     setStatus('loading')
     setApiError(null)
     setLastFormData(formData)
+    setProgressStage('Sending brief for interrogation')
 
     const controller = new AbortController()
-    const ANALYZE_TIMEOUT_MS = 180_000
+    const ANALYZE_TIMEOUT_MS = 300_000
     const timeoutId = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS)
 
     try {
@@ -179,6 +187,9 @@ function GeneratePageInner() {
         if (response.status === 503 && err.code === 'BUDGET_EXCEEDED') {
           throw new Error(err.error || 'Free analysis is temporarily unavailable. Please try again later or sign up for a paid plan.')
         }
+        if (response.status === 402 && err.code === 'INSUFFICIENT_TOKENS') {
+          throw new Error(err.error || 'Not enough tokens to run analysis. Upgrade or buy tokens to continue.')
+        }
         if (response.status === 429) {
           if (err.code === 'RATE_LIMIT') {
             const retryAfter = Number(response.headers.get('Retry-After') ?? err.retryAfter ?? 60)
@@ -198,10 +209,52 @@ function GeneratePageInner() {
         throw new Error(err.error || 'Analysis failed')
       }
 
-      const data = await response.json()
-      const analysisResult = data as BriefAnalysisData
+      const contentType = response.headers.get('content-type') ?? ''
+      const isStreaming = contentType.includes('application/x-ndjson') && !!response.body
+
+      let analysisResult: (BriefAnalysisData & { generationId?: string | null }) | null = null
+      let streamError: { message: string; code?: string } | null = null
+
+      if (isStreaming) {
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          let newlineIdx: number
+          while ((newlineIdx = buffer.indexOf('\n')) >= 0) {
+            const line = buffer.slice(0, newlineIdx).trim()
+            buffer = buffer.slice(newlineIdx + 1)
+            if (!line) continue
+            let msg: StreamMessage
+            try {
+              msg = JSON.parse(line) as StreamMessage
+            } catch {
+              continue
+            }
+            if (msg.type === 'stage') {
+              setProgressStage(msg.message ?? msg.stage)
+            } else if (msg.type === 'result') {
+              analysisResult = msg.data
+            } else if (msg.type === 'error') {
+              streamError = { message: msg.error, code: msg.code }
+            }
+          }
+        }
+
+        if (streamError) throw new Error(streamError.message)
+        if (!analysisResult) throw new Error('Analysis ended unexpectedly. Please try again.')
+      } else {
+        const data = await response.json()
+        analysisResult = data as BriefAnalysisData & { generationId?: string | null }
+      }
+
       setAnalysisData(analysisResult)
-      setGenerationId(data.generationId ?? null)
+      setGenerationId(analysisResult.generationId ?? null)
       setMobileResultsCollapsed(false)
       setStatus('done')
       setCompletedAt(new Date().toLocaleTimeString())
@@ -215,9 +268,9 @@ function GeneratePageInner() {
     } catch (err) {
       let errorMsg: string
       if (err instanceof DOMException && err.name === 'AbortError') {
-        errorMsg = 'Analysis timed out. Your brief may be unusually long — try shortening it or splitting it up, then try again.'
+        errorMsg = 'Analysis timed out after 5 minutes. Try a shorter brief, or try again.'
       } else if (err instanceof TypeError && /fetch|network/i.test(err.message)) {
-        errorMsg = 'The connection dropped before we could finish. This usually happens on very long briefs. Try shortening the brief and running it again.'
+        errorMsg = 'The connection dropped before we could finish. Please check your network and try again.'
       } else {
         errorMsg = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
       }
@@ -226,6 +279,7 @@ function GeneratePageInner() {
       setStatus('error')
     } finally {
       clearTimeout(timeoutId)
+      setProgressStage(null)
     }
   }
 
@@ -326,7 +380,47 @@ function GeneratePageInner() {
             aria-label="Interrogating your brief"
             style={{ position: 'relative', height: 3, overflow: 'hidden', background: 'rgba(255,255,255,0.1)' }}
           />
+          {progressStage && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="border-b border-border-subtle bg-black-deep px-4 py-2 text-xs text-white-muted sm:px-6 lg:px-8"
+            >
+              <div className="mx-auto max-w-7xl flex items-center gap-2">
+                <span className="h-2 w-2 flex-shrink-0 animate-pulse bg-red-hot" aria-hidden="true" />
+                <span>{progressStage}…</span>
+              </div>
+            </div>
+          )}
         </>
+      )}
+
+      {/* Page-level API error banner — always visible on error, independent of form mount state */}
+      {status === 'error' && apiError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="border-b border-red-hot bg-black-card px-4 py-3 sm:px-6 lg:px-8"
+        >
+          <div className="mx-auto max-w-7xl flex items-start justify-between gap-4">
+            <div className="flex items-start gap-2 text-sm text-red-hot">
+              <svg className="mt-0.5 h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <p>{apiError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setApiError(null); setStatus('idle') }}
+              aria-label="Dismiss error"
+              className="flex-shrink-0 p-1 text-red-hot/70 hover:text-red-hot transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Welcome banner for first-time users */}
@@ -468,9 +562,9 @@ function GeneratePageInner() {
           </button>
         </div>
       </div>
-      {/* Sticky mobile interrogate button */}
+      {/* Sticky mobile interrogate button — phones only */}
       {isFormFilled && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-black-deep p-4 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-black-deep p-4 md:hidden">
           <button
             type="submit"
             form="generate-form"
