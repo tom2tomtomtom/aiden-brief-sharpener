@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getUser } from '@/lib/auth'
 import { getBalance } from '@/lib/gateway-tokens'
 import { checkRateLimit } from '@/lib/rate-limit'
+
+// The export endpoint builds HTML inline from whatever the client posts, so
+// unbounded payloads turn straight into CPU + memory pressure. escapeHtml()
+// prevents XSS, but the cost of actually building the document is linear in
+// the payload size. Cap the serialized body at 512KB and bound the arrays /
+// strings individually to keep one user from holding up the event loop.
+const exportPdfSchema = z.object({
+  extractedBrief: z.record(z.string(), z.unknown()).optional(),
+  strategicAnalysis: z.record(z.string(), z.unknown()).optional(),
+  gaps: z.array(z.string().max(2000)).max(200).optional(),
+  score: z.number().finite().optional(),
+})
+
+const MAX_BODY_JSON_BYTES = 512 * 1024
 
 const BRIEF_FIELD_LABELS: Record<string, string> = {
   campaign_name: 'Campaign',
@@ -285,7 +300,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'PDF export requires a paid plan', code: 'PAID_PLAN_REQUIRED' }, { status: 403 })
   }
 
-  let body: { extractedBrief?: Record<string, unknown>; strategicAnalysis?: Record<string, unknown>; gaps?: string[]; score?: number } = {}
+  let rawBody: unknown = {}
 
   const contentType = req.headers.get('content-type') ?? ''
 
@@ -293,16 +308,33 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const raw = formData.get('data')
     if (typeof raw === 'string') {
-      try { body = JSON.parse(raw) } catch { /* ignore */ }
+      if (raw.length > MAX_BODY_JSON_BYTES) {
+        return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+      }
+      try { rawBody = JSON.parse(raw) } catch { /* ignore */ }
     }
   } else {
-    try { body = await req.json() } catch { /* ignore */ }
+    try {
+      const text = await req.text()
+      if (text.length > MAX_BODY_JSON_BYTES) {
+        return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+      }
+      rawBody = text ? JSON.parse(text) : {}
+    } catch { /* ignore */ }
   }
 
-  const extractedBrief = (body.extractedBrief ?? {}) as Record<string, unknown>
-  const strategicAnalysis = (body.strategicAnalysis ?? {}) as Record<string, unknown>
-  const gaps = Array.isArray(body.gaps) ? body.gaps as string[] : []
-  const rawScore = typeof body.score === 'number' ? body.score : 0
+  const parsed = exportPdfSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Invalid request', details: parsed.error.flatten() },
+      { status: 400 }
+    )
+  }
+
+  const extractedBrief = (parsed.data.extractedBrief ?? {}) as Record<string, unknown>
+  const strategicAnalysis = (parsed.data.strategicAnalysis ?? {}) as Record<string, unknown>
+  const gaps = parsed.data.gaps ?? []
+  const rawScore = parsed.data.score ?? 0
   const score = Math.min(100, Math.max(0, Math.round(rawScore)))
 
   const scoreHtml = buildScoreHtml(score)

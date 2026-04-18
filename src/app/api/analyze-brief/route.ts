@@ -249,6 +249,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Brief text exceeds maximum length (100,000 characters).' }, { status: 400 })
   }
 
+  // brandName / industry / briefType flow straight into the Brain prompt.
+  // Without caps, an attacker can wedge huge strings here — they don't hit
+  // the briefText cap but still inflate Claude input tokens.
+  if (
+    (typeof brandName === 'string' && brandName.length > 200) ||
+    (typeof industry === 'string' && industry.length > 200) ||
+    (typeof briefType === 'string' && briefType.length > 100)
+  ) {
+    return NextResponse.json(
+      { error: 'brandName / industry / briefType exceed allowed length' },
+      { status: 400 }
+    )
+  }
+
   let guestIdentifier: string | null = null
   if (!user) {
     // Layer 1: Per-IP daily hard cap (can't bypass with cookies/user-agent changes)
