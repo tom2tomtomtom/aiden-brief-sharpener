@@ -12,6 +12,35 @@ import { estimateCost, recordCost, checkBudget, type UserTier } from '@/lib/cost
 const AIDEN_API_BASE = process.env.AIDEN_API_URL ?? 'https://aiden-api-production.up.railway.app'
 const AIDEN_API_KEY = process.env.AIDEN_API_KEY ?? ''
 
+// Brain sometimes restates the same rubric section (e.g. "Cultural Ambition
+// (25%)") twice in one response — once as a scorecard entry and again as a
+// narrative paragraph. This deduplicates sections that share an identical
+// heading line (case-insensitive, whitespace-normalised), keeping the first
+// occurrence. Headings matched: # ## ### at start of line.
+function dedupeMarkdownSections(md: string): string {
+  if (!md) return md
+  const lines = md.split('\n')
+  const seen = new Set<string>()
+  const out: string[] = []
+  let skipUntilNextHeading = false
+  const headingRe = /^(#{1,4})\s+(.+?)\s*$/
+
+  for (const line of lines) {
+    const m = headingRe.exec(line)
+    if (m) {
+      const key = `${m[1].length}|${m[2].toLowerCase().replace(/\s+/g, ' ').trim()}`
+      if (seen.has(key)) {
+        skipUntilNextHeading = true
+        continue
+      }
+      seen.add(key)
+      skipUntilNextHeading = false
+    }
+    if (!skipUntilNextHeading) out.push(line)
+  }
+  return out.join('\n')
+}
+
 // Single source of truth for request shape + caps. briefText dominates
 // Claude input tokens; brandName/industry/briefType are short metadata
 // fields that still need to be bounded because they also flow into the
@@ -430,13 +459,13 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
           const briefSection = sections[1].trim()
 
           strategicAnalysis = {
-            aidenAnalysis: analysisSection,
+            aidenAnalysis: dedupeMarkdownSections(analysisSection),
             rawResponse: brainResponse,
           }
           rewrittenBrief = briefSection
         } else {
           strategicAnalysis = {
-            aidenAnalysis: brainResponse,
+            aidenAnalysis: dedupeMarkdownSections(brainResponse),
             rawResponse: brainResponse,
           }
         }
