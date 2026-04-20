@@ -488,7 +488,7 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
             // mark it so ops can reconcile manually. Do NOT silently drop it.
           }
 
-          const { data } = await adminSupabase
+          const { data, error: insertError } = await adminSupabase
             .from('generations')
             .insert({
               user_id: user.id,
@@ -497,6 +497,15 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
             })
             .select('id')
             .single()
+          if (insertError) {
+            logger.error('analysis.persist_failed', {
+              userId: user.id,
+              code: insertError.code,
+              message: insertError.message,
+              details: insertError.details,
+              hint: insertError.hint,
+            })
+          }
           generationId = data?.id ?? null
         } else if (guestIdentifier) {
           await incrementGuestMonthlyUsage(guestIdentifier)
