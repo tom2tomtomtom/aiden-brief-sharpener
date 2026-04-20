@@ -85,7 +85,7 @@ export function estimateCost(
 }
 
 export async function recordCost(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, any, any, any, any>,
   record: CostRecord
 ): Promise<void> {
   try {
@@ -120,7 +120,7 @@ interface BudgetCheck {
 }
 
 export async function checkBudget(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<any, any, any, any, any>,
   userTier: UserTier
 ): Promise<BudgetCheck> {
   try {

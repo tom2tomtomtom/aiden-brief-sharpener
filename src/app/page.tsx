@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 import NavBar from '@/components/NavBar'
 import FAQAccordion from '@/components/FAQAccordion'
 import TryDemoSection from '@/components/TryDemoSection'
 import EmailCapture from '@/components/EmailCapture'
 import ExampleOutputs from '@/components/ExampleOutputs'
 import type { StatsResponse } from '@/app/api/stats/route'
+import { verifyGatewayJWT, GW_COOKIE_NAME } from '@/lib/gateway-jwt'
 
 export const metadata: Metadata = {
   title: 'AIDEN Brief Intelligence | AI-Powered Brief Analysis',
@@ -118,6 +121,16 @@ const gapTypes = [
 ]
 
 export default async function MarketingPage() {
+  // If the user arrives with a live Gateway session, drop them straight
+  // into the app. Prevents the "Log in / Try free" marketing chrome from
+  // appearing for authenticated hub users arriving via subdomain SSO.
+  const jar = await cookies()
+  const gwToken = jar.get(GW_COOKIE_NAME)?.value
+  if (gwToken) {
+    const payload = await verifyGatewayJWT(gwToken)
+    if (payload) redirect('/dashboard')
+  }
+
   const stats = await getStats()
 
   return (

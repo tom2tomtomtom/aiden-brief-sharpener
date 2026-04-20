@@ -477,14 +477,23 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
         // Deduct tokens and save for authenticated users
         let generationId: string | null = null
         if (user) {
-          await deductTokens(user.id, 'analyze')
+          const deductResult = await deductTokens(user.id, 'analyze')
+
+          if (!deductResult.success) {
+            logger.error('analysis.deduct_failed', {
+              userId: user.id,
+              error: deductResult.error ?? 'unknown',
+            })
+            // Persist the analysis anyway (we already spent LLM dollars) but
+            // mark it so ops can reconcile manually. Do NOT silently drop it.
+          }
 
           const { data } = await adminSupabase
             .from('generations')
             .insert({
               user_id: user.id,
               input_data: { briefText, brandName, industry, briefType },
-              output_copy: { extractedBrief, strategicAnalysis, gaps, score, scoreBreakdown, rewrittenBrief, clarifyingQuestions, classicScores, classicBenchmarks, marketInsights },
+              output_copy: { extractedBrief, strategicAnalysis, gaps, score, scoreBreakdown, rewrittenBrief, clarifyingQuestions, classicScores, classicBenchmarks, marketInsights, deductFailed: !deductResult.success },
             })
             .select('id')
             .single()
@@ -492,6 +501,11 @@ IMPORTANT: Use the section headers exactly as shown above (## STRATEGIC ANALYSIS
         } else if (guestIdentifier) {
           await incrementGuestMonthlyUsage(guestIdentifier)
           await incrementIpDailyUsage(ip)
+          logger.warn('analysis.unauth_served', {
+            ip,
+            guestIdentifier,
+            reason: 'no authenticated user — served as guest',
+          })
         }
 
         const durationMs = Date.now() - startTime
