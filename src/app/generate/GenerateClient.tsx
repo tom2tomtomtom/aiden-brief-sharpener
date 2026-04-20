@@ -319,12 +319,6 @@ function GeneratePageInner() {
                   </Link>
                 </span>
               )}
-              {planInfo?.plan === 'free' && (
-                <span className="text-sm text-white-muted">
-                  <span className="font-semibold text-white">{Math.max(0, 3 - planInfo.used)}</span>
-                  {' '}free {Math.max(0, 3 - planInfo.used) === 1 ? 'analysis' : 'analyses'} remaining
-                </span>
-              )}
               {isAuthenticated && (
                 <Link href="/dashboard" className="text-sm font-medium text-white-muted hover:text-orange-accent transition-colors">
                   Dashboard
