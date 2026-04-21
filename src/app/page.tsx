@@ -170,7 +170,7 @@ export default async function MarketingPage() {
           </div>
           <h1 className="text-5xl font-extrabold tracking-tight text-white uppercase sm:text-6xl leading-tight">
             Your brief is{' '}
-            <span className="text-red-hot whitespace-nowrap">holding you back.</span>
+            <span className="text-red-hot">holding you back.</span>
             <br />
             AIDEN will show you&nbsp;why.
           </h1>
